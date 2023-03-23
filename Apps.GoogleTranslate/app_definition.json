@@ -1,0 +1,16 @@
+{
+  "definition": [
+    {
+      "name": "serviceAccountConfString",
+      "description": "Json string configuration of GCP service account"
+    },
+    {
+      "name": "projectId",
+      "description": "Your project ID in GCP"
+    }
+  ],
+  "communicationWrapperType": "HttpWrapper",
+  "authenticationType": null,
+  "authenticationDefition": null,
+  "authenticationResponseMapping": null
+}
