@@ -2,15 +2,12 @@
 using Apps.GoogleTranslate.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
-using Google.Api.Gax.Grpc.Rest;
 using Google.Api.Gax.ResourceNames;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Services;
 using Google.Cloud.Translate.V3;
 using TranslateDocumentResponse = Apps.GoogleTranslate.Models.Responses.TranslateDocumentResponse;
 using TranslateDocumentRequest = Apps.GoogleTranslate.Models.Requests.TranslateDocumentRequest;
 using Google.Protobuf;
-using System.IO;
+using Apps.GoogleTranslate.Dtos;
 
 namespace Apps.GoogleTranslate
 {
@@ -83,6 +80,21 @@ namespace Apps.GoogleTranslate
                 File = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray(),
                 DetectedSourceLanguage = response.DocumentTranslation.DetectedLanguageCode,
                 MimeType = response.DocumentTranslation.MimeType,
+            };
+        }
+
+        [Action("Get supported languages", Description = "Get supported languages")]
+        public GetSupportedLanguagesResponse GetSupportedLanguages(string serviceAccountConfString, AuthenticationCredentialsProvider authenticationCredentialsProvider)
+        {
+            var client = new TranslationServiceClientBuilder { JsonCredentials = serviceAccountConfString }.Build();
+            var request = new GetSupportedLanguagesRequest
+            {
+                Parent = new LocationName(authenticationCredentialsProvider.Value, "global").ToString()
+            };
+            var response = client.GetSupportedLanguages(request).Languages.Select(l => new LanguageDto() { LanguageCode = l.LanguageCode}).ToList();
+            return new GetSupportedLanguagesResponse()
+            {
+                SupportedLanguages = response
             };
         }
     }
