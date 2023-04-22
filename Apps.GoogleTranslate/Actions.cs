@@ -8,6 +8,7 @@ using TranslateDocumentResponse = Apps.GoogleTranslate.Models.Responses.Translat
 using TranslateDocumentRequest = Apps.GoogleTranslate.Models.Requests.TranslateDocumentRequest;
 using Google.Protobuf;
 using Apps.GoogleTranslate.Dtos;
+using Blackbird.Applications.Sdk.Common.Actions;
 
 namespace Apps.GoogleTranslate
 {
@@ -15,17 +16,17 @@ namespace Apps.GoogleTranslate
     public class Actions
     {
         [Action("Translate to language", Description = "Translate to specified language")]
-        public TranslateResponse Translate(string serviceAccountConfString, AuthenticationCredentialsProvider authenticationCredentialsProvider,
+        public TranslateResponse Translate(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
            [ActionParameter] TranslateRequest input)
         {
-            var client = new TranslationServiceClientBuilder{ JsonCredentials = serviceAccountConfString }.Build();
+            var client = new BlackbirdGoogleTranslateClient(authenticationCredentialsProviders);
             var request = new TranslateTextRequest
             {
                 Contents = { input.Content },
                 TargetLanguageCode = input.TargetLanguageCode,
-                Parent = new ProjectName(authenticationCredentialsProvider.Value).ToString()
+                Parent = client.ProjectName.ToString()
             };
-            TranslateTextResponse response = client.TranslateText(request);
+            TranslateTextResponse response = client.TranslateClient.TranslateText(request);
             Translation translation = response.Translations[0];
             return new TranslateResponse()
             {
@@ -35,16 +36,16 @@ namespace Apps.GoogleTranslate
         }
 
         [Action("Detect language", Description = "Detect language from string")]
-        public DetectResponse DetectLanguage(string serviceAccountConfString, AuthenticationCredentialsProvider authenticationCredentialsProvider,
+        public DetectResponse DetectLanguage(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
            [ActionParameter] DetectRequest input)
         {
-            var client = new TranslationServiceClientBuilder { JsonCredentials = serviceAccountConfString }.Build();
+            var client = new BlackbirdGoogleTranslateClient(authenticationCredentialsProviders);
             var request = new DetectLanguageRequest
             {
                 Content = input.Content,
-                Parent = new ProjectName(authenticationCredentialsProvider.Value).ToString()
+                Parent = client.ProjectName.ToString()
             };
-            var response = client.DetectLanguage(request).Languages[0].LanguageCode;
+            var response = client.TranslateClient.DetectLanguage(request).Languages[0].LanguageCode;
             return new DetectResponse()
             {
                 LanguageCode = response
@@ -52,10 +53,10 @@ namespace Apps.GoogleTranslate
         }
 
         [Action("Translate document", Description = "Translate document (file)")]
-        public TranslateDocumentResponse TranslateDocumentLanguage(string serviceAccountConfString, AuthenticationCredentialsProvider authenticationCredentialsProvider,
+        public TranslateDocumentResponse TranslateDocumentLanguage(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
            [ActionParameter] TranslateDocumentRequest input)
         {
-            var client = new TranslationServiceClientBuilder { JsonCredentials = serviceAccountConfString }.Build();
+            var client = new BlackbirdGoogleTranslateClient(authenticationCredentialsProviders);
 
             DocumentInputConfig config;
             using (MemoryStream stream = new MemoryStream(input.File))
@@ -71,9 +72,9 @@ namespace Apps.GoogleTranslate
             {
                 DocumentInputConfig = config,
                 TargetLanguageCode = input.TargetLanguageCode,
-                Parent = new LocationName(authenticationCredentialsProvider.Value, "global").ToString()
+                Parent = client.LocationName.ToString()
             };
-            var response = client.TranslateDocument(request);
+            var response = client.TranslateClient.TranslateDocument(request);
 
             return new TranslateDocumentResponse()
             {
@@ -84,14 +85,14 @@ namespace Apps.GoogleTranslate
         }
 
         [Action("Get supported languages", Description = "Get supported languages")]
-        public GetSupportedLanguagesResponse GetSupportedLanguages(string serviceAccountConfString, AuthenticationCredentialsProvider authenticationCredentialsProvider)
+        public GetSupportedLanguagesResponse GetSupportedLanguages(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
         {
-            var client = new TranslationServiceClientBuilder { JsonCredentials = serviceAccountConfString }.Build();
+            var client = new BlackbirdGoogleTranslateClient(authenticationCredentialsProviders);
             var request = new GetSupportedLanguagesRequest
             {
-                Parent = new LocationName(authenticationCredentialsProvider.Value, "global").ToString()
+                Parent = client.LocationName.ToString()
             };
-            var response = client.GetSupportedLanguages(request).Languages.Select(l => new LanguageDto() { LanguageCode = l.LanguageCode}).ToList();
+            var response = client.TranslateClient.GetSupportedLanguages(request).Languages.Select(l => new LanguageDto() { LanguageCode = l.LanguageCode}).ToList();
             return new GetSupportedLanguagesResponse()
             {
                 SupportedLanguages = response
