@@ -2,13 +2,13 @@
 using Apps.GoogleTranslate.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Authentication;
-using Google.Api.Gax.ResourceNames;
 using Google.Cloud.Translate.V3;
 using TranslateDocumentResponse = Apps.GoogleTranslate.Models.Responses.TranslateDocumentResponse;
 using TranslateDocumentRequest = Apps.GoogleTranslate.Models.Requests.TranslateDocumentRequest;
 using Google.Protobuf;
 using Apps.GoogleTranslate.Dtos;
 using Blackbird.Applications.Sdk.Common.Actions;
+using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.GoogleTranslate
 {
@@ -59,12 +59,12 @@ namespace Apps.GoogleTranslate
             var client = new BlackbirdGoogleTranslateClient(authenticationCredentialsProviders);
 
             DocumentInputConfig config;
-            using (MemoryStream stream = new MemoryStream(input.File))
+            using (MemoryStream stream = new MemoryStream(input.File.Bytes))
             {
-                config = new DocumentInputConfig()
+                config = new DocumentInputConfig
                 {
                     Content = ByteString.FromStream(stream),
-                    MimeType = input.MimeType
+                    MimeType = input.File.ContentType
                 };
             }
 
@@ -75,12 +75,20 @@ namespace Apps.GoogleTranslate
                 Parent = client.LocationName.ToString()
             };
             var response = client.TranslateClient.TranslateDocument(request);
-
-            return new TranslateDocumentResponse()
+            
+            var translatedFileBytes = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray();
+            var dotIndex = input.File.Name.LastIndexOf(".");
+            dotIndex = dotIndex == -1 ? input.File.Name.Length : dotIndex;
+            var translatedFileName = input.File.Name.Insert(dotIndex, $"_{input.TargetLanguageCode}");
+            
+            return new TranslateDocumentResponse
             {
-                File = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray(),
-                DetectedSourceLanguage = response.DocumentTranslation.DetectedLanguageCode,
-                MimeType = response.DocumentTranslation.MimeType,
+                File = new File(translatedFileBytes)
+                {
+                    ContentType = response.DocumentTranslation.MimeType,
+                    Name = translatedFileName
+                },
+                DetectedSourceLanguage = response.DocumentTranslation.DetectedLanguageCode
             };
         }
 

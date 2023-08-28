@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.GoogleTranslate.Dtos
 {
     public class LanguageDto
     {
+        [Display("Language code")]
         public string LanguageCode { get; set; }
     }
 }

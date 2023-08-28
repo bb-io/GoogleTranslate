@@ -1,10 +1,5 @@
 ﻿using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.GoogleTranslate.Connections
 {
@@ -12,15 +7,15 @@ namespace Apps.GoogleTranslate.Connections
     {
         public IEnumerable<ConnectionPropertyGroup> ConnectionPropertyGroups => new List<ConnectionPropertyGroup>()
         {
-            new ConnectionPropertyGroup
+            new()
             {
                 Name = "Service account",
                 AuthenticationType = ConnectionAuthenticationType.Undefined,
                 ConnectionUsage = ConnectionUsage.Actions,
                 ConnectionProperties = new List<ConnectionProperty>()
                 {
-                    new ConnectionProperty("serviceAccountConfString"),
-                    new ConnectionProperty("projectId")
+                    new("serviceAccountConfString") { DisplayName = "Service account configuration string" },
+                    new("projectId") { DisplayName = "Project ID" }
                 }
             }
         };

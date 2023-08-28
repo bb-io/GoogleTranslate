@@ -1,14 +1,11 @@
 ﻿using Apps.GoogleTranslate.Dtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.GoogleTranslate.Models.Responses
 {
     public class GetSupportedLanguagesResponse
     {
+        [Display("Supported languages")]
         public IEnumerable<LanguageDto> SupportedLanguages { get; set; }
     }
 }

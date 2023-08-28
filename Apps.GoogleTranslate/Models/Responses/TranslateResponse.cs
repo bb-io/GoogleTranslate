@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.GoogleTranslate.Models.Responses
 {
@@ -10,6 +6,7 @@ namespace Apps.GoogleTranslate.Models.Responses
     {
         public string Translation { get; set; }
 
+        [Display("Detected source language")]
         public string DetectedSourceLanguage { get; set; }
     }
 }

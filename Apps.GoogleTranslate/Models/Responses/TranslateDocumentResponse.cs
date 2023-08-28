@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Blackbird.Applications.Sdk.Common;
+using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.GoogleTranslate.Models.Responses
 {
     public class TranslateDocumentResponse
     {
-        public byte[] File { get; set; }
+        public File File { get; set; }
 
-        public string MimeType { get; set; }
-
+        [Display("Detected source language")]
         public string DetectedSourceLanguage { get; set; }
     }
 }
