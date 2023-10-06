@@ -1,18 +1,13 @@
 ﻿using Blackbird.Applications.Sdk.Common.Authentication;
 using Google.Api.Gax.ResourceNames;
 using Google.Cloud.Translate.V3;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.GoogleTranslate
 {
     public class BlackbirdGoogleTranslateClient
     {
-        private string _serviceAccountConfString;
-        private string _projectId;
+        private readonly string _serviceAccountConfString;
+        private readonly string _projectId;
 
         public TranslationServiceClient TranslateClient => new TranslationServiceClientBuilder { JsonCredentials = _serviceAccountConfString }.Build();
         public ProjectName ProjectName => new ProjectName(_projectId);
