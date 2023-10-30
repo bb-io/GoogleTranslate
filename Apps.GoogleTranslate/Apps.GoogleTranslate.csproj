@@ -4,8 +4,8 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<Product>Blackbird Google Translate</Product>
-	<Version>1.0.0</Version>
+	<Product>Google Translate</Product>
+	<Version>1.0.1</Version>
 	<Description>Multilingual neural machine translation service to translate text, documents and websites from one language into another.</Description>
 	<AssemblyName>Apps.GoogleTranslate</AssemblyName>
   </PropertyGroup>
