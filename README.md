@@ -22,7 +22,7 @@ Before you can connect you need to make sure that:
 4. Fill in the 'Service account configuration string' field.
 5. Click _Connect_.
 
-![connection.png](/image/README/connection.png)
+![connection.png](/image/README/Connection.png)
 
 ## Actions 
 
