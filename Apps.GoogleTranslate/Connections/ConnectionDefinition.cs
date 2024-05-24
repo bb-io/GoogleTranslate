@@ -1,6 +1,8 @@
 ﻿using Apps.GoogleTranslate.Constants;
+using Apps.GoogleTranslate.Models;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
+using Newtonsoft.Json;
 
 namespace Apps.GoogleTranslate.Connections;
 
@@ -16,7 +18,6 @@ public class ConnectionDefinition : IConnectionDefinition
             ConnectionProperties = new List<ConnectionProperty>
             {
                 new(CredNames.ServiceAccountConfigurationString) { DisplayName = "Service account configuration string" },
-                new(CredNames.ProjectId) { DisplayName = "Project ID" }
             }
         }
     };
@@ -30,11 +31,13 @@ public class ConnectionDefinition : IConnectionDefinition
             serviceAccountConfString.Value
         );
 
-        var projectId = values.First(v => v.Key == CredNames.ProjectId);
+        var configurationString = JsonConvert.DeserializeObject<ConfigurationString>(serviceAccountConfString.Value) ??
+                                  throw new Exception($"Invalid service account configuration string: {serviceAccountConfString.Value}");
+        
         yield return new AuthenticationCredentialsProvider(
             AuthenticationCredentialsRequestLocation.None,
-            projectId.Key,
-            projectId.Value
+            CredNames.ProjectId,
+            configurationString.ProjectId
         );
     }
 }

@@ -10,9 +10,10 @@ public class LanguageDataHandler(InvocationContext invocationContext)
         CancellationToken cancellationToken)
     {
         var actions = new Actions(invocationContext, null);
-        
+
         var languages = await actions.GetSupportedLanguages();
         return languages.SupportedLanguages
-            .ToDictionary(x => x.LanguageCode, x => x.LanguageCode);
+            .Where(x => context.SearchString == null || x.LanguageName.Contains(context.SearchString))
+            .ToDictionary(x => x.LanguageCode, x => x.LanguageName);
     }
 }

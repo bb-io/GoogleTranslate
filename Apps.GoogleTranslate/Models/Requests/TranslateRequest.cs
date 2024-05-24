@@ -6,8 +6,9 @@ namespace Apps.GoogleTranslate.Models.Requests;
 
 public class TranslateRequest
 {
+    [Display("Text")]
     public string Content { get; set; }
 
-    [Display("Target language code"), DataSource(typeof(LanguageDataHandler))]
+    [Display("Target language"), DataSource(typeof(LanguageDataHandler))]
     public string TargetLanguageCode { get; set; }
 }

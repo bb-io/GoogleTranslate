@@ -9,6 +9,6 @@ public class TranslateDocumentRequest
 {
     public FileReference File { get; set; }
 
-    [Display("Target language code"), DataSource(typeof(LanguageDataHandler))]
+    [Display("Target language"), DataSource(typeof(LanguageDataHandler))]
     public string TargetLanguageCode { get; set; }
 }

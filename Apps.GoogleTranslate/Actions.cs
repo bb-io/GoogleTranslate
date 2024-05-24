@@ -25,7 +25,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             TargetLanguageCode = input.TargetLanguageCode,
             Parent = Client.ProjectName.ToString()
         };
-        
+
         var response = await Client.TranslateClient.TranslateTextAsync(request);
         var translation = response.Translations[0];
         return new TranslateResponse()
@@ -53,7 +53,8 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     }
 
     [Action("Translate document", Description = "Translate document (file)")]
-    public async Task<TranslateDocumentResponse> TranslateDocumentLanguage([ActionParameter] TranslateDocumentRequest input)
+    public async Task<TranslateDocumentResponse> TranslateDocumentLanguage(
+        [ActionParameter] TranslateDocumentRequest input)
     {
         var fileStream = fileManagementClient.DownloadAsync(input.File).Result;
         var config = new DocumentInputConfig
@@ -68,10 +69,10 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             TargetLanguageCode = input.TargetLanguageCode,
             Parent = Client.LocationName.ToString()
         };
-        
+
         var response = await Client.TranslateClient.TranslateDocumentAsync(request);
         var translatedFileBytes = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray();
-        
+
         var dotIndex = input.File.Name.LastIndexOf(".");
         dotIndex = dotIndex == -1 ? input.File.Name.Length : dotIndex;
         var translatedFileName = input.File.Name.Insert(dotIndex, $"_{input.TargetLanguageCode}");
@@ -79,7 +80,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         using var stream = new MemoryStream(translatedFileBytes);
         var translatedFile = fileManagementClient.UploadAsync(stream, response.DocumentTranslation.MimeType,
             translatedFileName).Result;
-            
+
         return new TranslateDocumentResponse
         {
             File = translatedFile,
@@ -87,16 +88,21 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         };
     }
 
-    [Action("Get supported languages", Description = "Get supported languages")]
     public async Task<GetSupportedLanguagesResponse> GetSupportedLanguages()
     {
         var request = new GetSupportedLanguagesRequest
         {
-            Parent = Client.LocationName.ToString()
+            Parent = Client.LocationName.ToString(),
+            DisplayLanguageCode = "en"
         };
-        
+
         var response = await Client.TranslateClient.GetSupportedLanguagesAsync(request);
-        var languages = response.Languages.Select(l => new LanguageDto { LanguageCode = l.LanguageCode}).ToList();
+        var languages = response.Languages.Select(l => new LanguageDto
+            { 
+                LanguageCode = l.LanguageCode, 
+                LanguageName = l.DisplayName 
+            }).ToList();
+        
         return new GetSupportedLanguagesResponse()
         {
             SupportedLanguages = languages

@@ -12,23 +12,23 @@ Google Translate is a multilingual neural machine translation service developed 
 
 Before you can connect you need to make sure that:
 
-- You have a `Service account configuration string` for your Google Cloud project. You can create a service account in the Google Cloud Console and download the JSON key file.
-- You have a `Project ID` for your Google Cloud project. You can find the Project ID in the Google Cloud Console.
+- You have a `Service account configuration string` for your Google Cloud project. You can create a service account or use an existing one in the Google Cloud Console (IAM & Admin -> Service accounts) and generate a key for it. The key will be a JSON file that contains the service account configuration string. You should copy the content of the JSON file and paste it into the `Service account configuration string` field.
 
 ## Connecting
 
 1.  Navigate to Apps, and identify the Google Translate app. You can use search to find it.
 2. Click _Add Connection_.
 3. Name your connection for future reference e.g. 'My Google Translate connection'.
-4. Fill in the 'Service account configuration string' and 'Project ID' fields.
+4. Fill in the 'Service account configuration string' field.
 5. Click _Connect_.
+
+![connection.png](/image/README/connection.png)
 
 ## Actions 
 
 - **Translate to language** - Translates text to a specified language
 - **Detect language** - Detects the language of the input text
 - **Translate document** - Translates a document (file) to a specified language
-- **Get supported languages** - Retrieves a list of supported languages
 
 ## Feedback
 
