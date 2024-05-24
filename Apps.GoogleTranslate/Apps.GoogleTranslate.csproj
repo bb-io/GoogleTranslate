@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>Google Translate</Product>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Description>Multilingual neural machine translation service to translate text, documents and websites from one language into another.</Description>
     <AssemblyName>Apps.GoogleTranslate</AssemblyName>
   </PropertyGroup>
@@ -12,7 +12,7 @@
     <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.6.0" />
     <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.1" />
     <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.13" />
-    <PackageReference Include="Google.Cloud.Translate.V3" Version="3.2.0" />
+    <PackageReference Include="Google.Cloud.Translate.V3" Version="3.7.0" />
     <PackageReference Include="MimeTypes" Version="2.4.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

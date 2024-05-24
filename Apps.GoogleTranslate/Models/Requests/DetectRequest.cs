@@ -1,7 +1,9 @@
-﻿namespace Apps.GoogleTranslate.Models.Requests
+﻿using Blackbird.Applications.Sdk.Common;
+
+namespace Apps.GoogleTranslate.Models.Requests;
+
+public class DetectRequest
 {
-    public class DetectRequest
-    {
-        public string Content { get; set; }
-    }
+    [Display("Text")]
+    public string Content { get; set; }
 }
