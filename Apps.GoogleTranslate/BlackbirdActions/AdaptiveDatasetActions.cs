@@ -1,15 +1,18 @@
-﻿using Apps.GoogleTranslate.Models.Requests;
+﻿using Apps.GoogleTranslate.Extensions;
+using Apps.GoogleTranslate.Models.Requests;
 using Apps.GoogleTranslate.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Google.Api.Gax.ResourceNames;
 using Google.Cloud.Translate.V3;
+using Google.Protobuf;
 
 namespace Apps.GoogleTranslate.BlackbirdActions;
 
 [ActionList]
-public class AdaptiveDatasetActions(InvocationContext invocationContext)
+public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {
     [Display("Get all adaptive datasets", Description = "List adaptive datasets")]
@@ -70,17 +73,36 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext)
                     ExampleCount = request.ExampleCount ?? 10
                 }
             });
-        
-        var datasetResponse = await Client.TranslateClient.ImportAdaptiveMtFileAsync(new ImportAdaptiveMtFileRequest
+
+        var importRequest = new ImportAdaptiveMtFileRequest
         {
             Parent = parent,
-            ParentAsAdaptiveMtDatasetName =  new AdaptiveMtDatasetName(Client.ProjectName.ProjectId, "us-central1", createdDataset.AdaptiveMtDatasetName.DatasetId),
-            GcsInputSource = new GcsInputSource
+            ParentAsAdaptiveMtDatasetName = new AdaptiveMtDatasetName(Client.ProjectName.ProjectId, "us-central1",
+                createdDataset.AdaptiveMtDatasetName.DatasetId)
+        };
+
+        if (!string.IsNullOrEmpty(request.GcsInputSource))
+        {
+            importRequest.GcsInputSource = new GcsInputSource
             {
                 InputUri = request.GcsInputSource
-            },
-        });
-
+            };
+        }
+        
+        if (request.File != null)
+        {
+            var stream = await fileManagementClient.DownloadAsync(request.File);
+            var byteString = await stream.ToByteStringAsync();
+            
+            importRequest.FileInputSource = new FileInputSource
+            {
+                Content = byteString,
+                MimeType = request.File?.ContentType,
+                DisplayName = request.File?.Name
+            };
+        }
+        
+        var datasetResponse = await Client.TranslateClient.ImportAdaptiveMtFileAsync(importRequest);
         return new CreateAdaptiveMtResponse
         {
             DisplayName = datasetResponse.AdaptiveMtFile.DisplayName,

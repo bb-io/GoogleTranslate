@@ -10,7 +10,7 @@ public class AdaptiveDatasetDataHandler(InvocationContext invocationContext)
     public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
         CancellationToken cancellationToken)
     {
-        var actions = new AdaptiveDatasetActions(invocationContext);
+        var actions = new AdaptiveDatasetActions(invocationContext, null);
 
         var languages = await actions.GetAdaptiveDatasetsAsync();
         return languages.AdaptiveMts
