@@ -14,7 +14,7 @@ namespace Apps.GoogleTranslate.BlackbirdActions;
 public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {
-    [Display("Get all adaptive datasets", Description = "List adaptive datasets")]
+    [Action("Get all adaptive datasets", Description = "List adaptive datasets")]
     public Task<GetAllAdaptiveMtResponse> GetAdaptiveDatasetsAsync()
     {
         string parent = Client.ProjectName + "/locations/us-central1";
@@ -36,7 +36,7 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
         });
     }
 
-    [Display("Get adaptive dataset", Description = "Get adaptive machine translation dataset based on ID")]
+    [Action("Get adaptive dataset", Description = "Get adaptive machine translation dataset based on ID")]
     public async Task<AdaptiveMtResponse> GetAdaptiveDatasetAsync([ActionParameter] GetAdaptiveDatasetRequest request)
     {
         var dataset = await Client.TranslateClient.GetAdaptiveMtDatasetAsync(new GetAdaptiveMtDatasetRequest
@@ -54,7 +54,7 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
         };
     }
     
-    [Display("Create adaptive dataset", Description = "Create adaptive machine translation dataset")]
+    [Action("Create adaptive dataset", Description = "Create adaptive machine translation dataset")]
     public async Task<CreateAdaptiveMtResponse> CreateAdaptiveMtAsync([ActionParameter] CreateAdaptiveDatasetRequest request)
     {
         string parent = Client.ProjectName + "/locations/us-central1";
@@ -110,7 +110,7 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
         };
     }
     
-    [Display("Delete adaptive dataset", Description = "Delete adaptive machine translation dataset based on ID")]
+    [Action("Delete adaptive dataset", Description = "Delete adaptive machine translation dataset based on ID")]
     public async Task DeleteAdaptiveDatasetAsync([ActionParameter] GetAdaptiveDatasetRequest request)
     {
         await Client.TranslateClient.DeleteAdaptiveMtDatasetAsync(new DeleteAdaptiveMtDatasetRequest
