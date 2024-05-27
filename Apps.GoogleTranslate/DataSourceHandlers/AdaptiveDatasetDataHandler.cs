@@ -14,7 +14,7 @@ public class AdaptiveDatasetDataHandler(InvocationContext invocationContext)
 
         var languages = await actions.GetAdaptiveDatasetsAsync();
         return languages.AdaptiveMts
-            .Where(x => context.SearchString == null || x.DisplayName.Contains(context.SearchString))
+            .Where(x => context.SearchString == null || x.DisplayName.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
             .ToDictionary(x => x.Name, x => x.DisplayName);
     }
 }

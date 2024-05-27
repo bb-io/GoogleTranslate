@@ -96,7 +96,7 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
             importRequest.FileInputSource = new FileInputSource
             {
                 Content = byteString,
-                MimeType = "text/plain",
+                MimeType = request.File?.ContentType,
                 DisplayName = request.File?.Name
             };
         }

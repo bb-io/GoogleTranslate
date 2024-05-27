@@ -9,7 +9,6 @@ using Apps.GoogleTranslate.Dtos;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Google.Api.Gax.ResourceNames;
 
 namespace Apps.GoogleTranslate;
 
@@ -35,10 +34,18 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
                 TargetLanguageCode = input.TargetLanguageCode,
                 Parent = Client.ProjectName.ToString(),
                 SourceLanguageCode = input.SourceLanguage,
+                GlossaryConfig = string.IsNullOrEmpty(input.GlossaryName) ? null : new TranslateTextGlossaryConfig
+                {
+                    Glossary = input.GlossaryName,
+                    IgnoreCase = input.IgnoreKeys ?? true
+                }
             };
 
             var response = await Client.TranslateClient.TranslateTextAsync(request);
-            var translation = response.Translations[0];
+            var translation = string.IsNullOrEmpty(input.GlossaryName)
+                ? response.Translations[0]
+                : response.GlossaryTranslations.FirstOrDefault() ?? response.Translations[0];
+            
             return new TranslateResponse
             {
                 Translation = translation.TranslatedText,
