@@ -7,5 +7,5 @@ public class TranslateResponse
     public string Translation { get; set; }
 
     [Display("Detected source language")]
-    public string DetectedSourceLanguage { get; set; }
+    public string? DetectedSourceLanguage { get; set; }
 }

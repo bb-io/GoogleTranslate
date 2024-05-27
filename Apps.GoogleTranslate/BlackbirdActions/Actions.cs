@@ -9,6 +9,7 @@ using Apps.GoogleTranslate.Dtos;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Google.Api.Gax.ResourceNames;
 
 namespace Apps.GoogleTranslate;
 
@@ -16,22 +17,47 @@ namespace Apps.GoogleTranslate;
 public class Actions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {
-    [Action("Translate to language", Description = "Translate to specified language")]
+    [Action("Translate to language", Description = "Translate to specified language (using adaptive dataset if provided)")]
     public async Task<TranslateResponse> Translate([ActionParameter] TranslateRequest input)
     {
-        var request = new TranslateTextRequest
+        if (string.IsNullOrEmpty(input.TargetLanguageCode) && string.IsNullOrEmpty(input.AdaptiveDatasetName))
         {
-            Contents = { input.Content },
-            TargetLanguageCode = input.TargetLanguageCode,
-            Parent = Client.ProjectName.ToString()
-        };
+            throw new ArgumentException("Please provide either target language or adaptive dataset name. " +
+                                        "If you want to translate without using dataset, please provide target language." +
+                                        "If you want to translate using adaptive dataset, please provide adaptive dataset name. ");
+        }
 
-        var response = await Client.TranslateClient.TranslateTextAsync(request);
-        var translation = response.Translations[0];
-        return new TranslateResponse()
+        if (!string.IsNullOrEmpty(input.TargetLanguageCode))
         {
-            Translation = translation.TranslatedText,
-            DetectedSourceLanguage = translation.DetectedLanguageCode
+            var request = new TranslateTextRequest
+            {
+                Contents = { input.Content },
+                TargetLanguageCode = input.TargetLanguageCode,
+                Parent = Client.ProjectName.ToString(),
+                SourceLanguageCode = input.SourceLanguage,
+            };
+
+            var response = await Client.TranslateClient.TranslateTextAsync(request);
+            var translation = response.Translations[0];
+            return new TranslateResponse
+            {
+                Translation = translation.TranslatedText,
+                DetectedSourceLanguage = translation.DetectedLanguageCode
+            };
+        }
+
+        var adaptiveMtTranslationResponse = await Client.TranslateClient.AdaptiveMtTranslateAsync(
+            new AdaptiveMtTranslateRequest
+            {
+                Parent = Client.ProjectName + "/locations/us-central1",
+                Dataset = input.AdaptiveDatasetName,
+                Content = { input.Content }
+            });
+
+        return new TranslateResponse
+        {
+            Translation = adaptiveMtTranslationResponse.Translations.First().TranslatedText,
+            DetectedSourceLanguage = adaptiveMtTranslationResponse.LanguageCode 
         };
     }
 
@@ -43,7 +69,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             Content = input.Content,
             Parent = Client.ProjectName.ToString()
         };
-
+        
         var response = await Client.TranslateClient.DetectLanguageAsync(request);
         var language = response.Languages[0].LanguageCode;
         return new DetectResponse()
