@@ -13,7 +13,7 @@ public class LanguageDataHandler(InvocationContext invocationContext)
 
         var languages = await actions.GetSupportedLanguages();
         return languages.SupportedLanguages
-            .Where(x => context.SearchString == null || x.LanguageName.Contains(context.SearchString))
+            .Where(x => context.SearchString == null || x.LanguageName.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
             .ToDictionary(x => x.LanguageCode, x => x.LanguageName);
     }
 }

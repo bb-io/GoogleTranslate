@@ -16,43 +16,59 @@ namespace Apps.GoogleTranslate;
 public class Actions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {
-    [Action("Translate to language", Description = "Translate to specified language")]
+    [Action("Translate", Description = "Translate a text to specified language (using adaptive dataset if provided)")]
     public async Task<TranslateResponse> Translate([ActionParameter] TranslateRequest input)
     {
-        var request = new TranslateTextRequest
+        if (string.IsNullOrEmpty(input.TargetLanguageCode) && string.IsNullOrEmpty(input.AdaptiveDatasetName))
         {
-            Contents = { input.Content },
-            TargetLanguageCode = input.TargetLanguageCode,
-            Parent = Client.ProjectName.ToString()
-        };
+            throw new ArgumentException("Please provide either target language or adaptive dataset name. " +
+                                        "If you want to translate without using dataset, please provide target language." +
+                                        "If you want to translate using adaptive dataset, please provide adaptive dataset name. ");
+        }
 
-        var response = await Client.TranslateClient.TranslateTextAsync(request);
-        var translation = response.Translations[0];
-        return new TranslateResponse()
+        if (!string.IsNullOrEmpty(input.TargetLanguageCode))
         {
-            Translation = translation.TranslatedText,
-            DetectedSourceLanguage = translation.DetectedLanguageCode
+            var request = new TranslateTextRequest
+            {
+                Contents = { input.Content },
+                TargetLanguageCode = input.TargetLanguageCode ?? string.Empty,
+                Parent = Client.ProjectName.ToString(),
+                SourceLanguageCode = input.SourceLanguage ?? string.Empty,
+                GlossaryConfig = string.IsNullOrEmpty(input.GlossaryName) ? new TranslateTextGlossaryConfig() : new TranslateTextGlossaryConfig
+                {
+                    Glossary = input.GlossaryName,
+                    IgnoreCase = input.IgnoreKeys ?? true
+                }
+            };
+
+            var response = await Client.TranslateClient.TranslateTextAsync(request);
+            var translation = string.IsNullOrEmpty(input.GlossaryName)
+                ? response.Translations[0]
+                : response.GlossaryTranslations.FirstOrDefault() ?? response.Translations[0];
+            
+            return new TranslateResponse
+            {
+                Translation = translation.TranslatedText,
+                DetectedSourceLanguage = translation.DetectedLanguageCode
+            };
+        }
+
+        var adaptiveMtTranslationResponse = await Client.TranslateClient.AdaptiveMtTranslateAsync(
+            new AdaptiveMtTranslateRequest
+            {
+                Parent = Client.ProjectName + "/locations/us-central1",
+                Dataset = input.AdaptiveDatasetName,
+                Content = { input.Content }
+            });
+
+        return new TranslateResponse
+        {
+            Translation = adaptiveMtTranslationResponse.Translations.First().TranslatedText,
+            DetectedSourceLanguage = adaptiveMtTranslationResponse.LanguageCode 
         };
     }
 
-    [Action("Detect language", Description = "Detect language from string")]
-    public async Task<DetectResponse> DetectLanguage([ActionParameter] DetectRequest input)
-    {
-        var request = new DetectLanguageRequest
-        {
-            Content = input.Content,
-            Parent = Client.ProjectName.ToString()
-        };
-
-        var response = await Client.TranslateClient.DetectLanguageAsync(request);
-        var language = response.Languages[0].LanguageCode;
-        return new DetectResponse()
-        {
-            LanguageCode = language
-        };
-    }
-
-    [Action("Translate document", Description = "Translate document (file)")]
+    [Action("Translate document", Description = "Translate a document")]
     public async Task<TranslateDocumentResponse> TranslateDocumentLanguage(
         [ActionParameter] TranslateDocumentRequest input)
     {
@@ -85,6 +101,23 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         {
             File = translatedFile,
             DetectedSourceLanguage = response.DocumentTranslation.DetectedLanguageCode
+        };
+    }
+    
+    [Action("Detect language", Description = "Detect language from string")]
+    public async Task<DetectResponse> DetectLanguage([ActionParameter] DetectRequest input)
+    {
+        var request = new DetectLanguageRequest
+        {
+            Content = input.Content,
+            Parent = Client.ProjectName.ToString()
+        };
+        
+        var response = await Client.TranslateClient.DetectLanguageAsync(request);
+        var language = response.Languages[0].LanguageCode;
+        return new DetectResponse()
+        {
+            LanguageCode = language
         };
     }
 
