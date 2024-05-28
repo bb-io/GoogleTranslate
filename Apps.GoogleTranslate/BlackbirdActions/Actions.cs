@@ -16,7 +16,7 @@ namespace Apps.GoogleTranslate;
 public class Actions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {
-    [Action("Translate to language", Description = "Translate to specified language (using adaptive dataset if provided)")]
+    [Action("Translate", Description = "Translate a text to specified language (using adaptive dataset if provided)")]
     public async Task<TranslateResponse> Translate([ActionParameter] TranslateRequest input)
     {
         if (string.IsNullOrEmpty(input.TargetLanguageCode) && string.IsNullOrEmpty(input.AdaptiveDatasetName))
@@ -68,24 +68,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         };
     }
 
-    [Action("Detect language", Description = "Detect language from string")]
-    public async Task<DetectResponse> DetectLanguage([ActionParameter] DetectRequest input)
-    {
-        var request = new DetectLanguageRequest
-        {
-            Content = input.Content,
-            Parent = Client.ProjectName.ToString()
-        };
-        
-        var response = await Client.TranslateClient.DetectLanguageAsync(request);
-        var language = response.Languages[0].LanguageCode;
-        return new DetectResponse()
-        {
-            LanguageCode = language
-        };
-    }
-
-    [Action("Translate document", Description = "Translate document (file)")]
+    [Action("Translate document", Description = "Translate a document")]
     public async Task<TranslateDocumentResponse> TranslateDocumentLanguage(
         [ActionParameter] TranslateDocumentRequest input)
     {
@@ -118,6 +101,23 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         {
             File = translatedFile,
             DetectedSourceLanguage = response.DocumentTranslation.DetectedLanguageCode
+        };
+    }
+    
+    [Action("Detect language", Description = "Detect language from string")]
+    public async Task<DetectResponse> DetectLanguage([ActionParameter] DetectRequest input)
+    {
+        var request = new DetectLanguageRequest
+        {
+            Content = input.Content,
+            Parent = Client.ProjectName.ToString()
+        };
+        
+        var response = await Client.TranslateClient.DetectLanguageAsync(request);
+        var language = response.Languages[0].LanguageCode;
+        return new DetectResponse()
+        {
+            LanguageCode = language
         };
     }
 

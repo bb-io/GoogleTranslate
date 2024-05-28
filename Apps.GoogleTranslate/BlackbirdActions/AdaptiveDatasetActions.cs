@@ -10,7 +10,7 @@ using Google.Cloud.Translate.V3;
 
 namespace Apps.GoogleTranslate.BlackbirdActions;
 
-[ActionList]
+/* ActionList attribute was removed due to we want to keep this function but not expose it to the user */
 public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {
