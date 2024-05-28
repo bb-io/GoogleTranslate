@@ -26,9 +26,9 @@ Before you can connect you need to make sure that:
 
 ## Actions 
 
-- **Translate to language** - Translates text to a specified language
+- **Translate** - Translates text to a specified language. Action also supports glossary and adaptive datasets.
 - **Detect language** - Detects the language of the input text
-- **Translate document** - Translates a document (file) to a specified language
+- **Translate document** - Translates a document to a specified language
 
 ## Feedback
 
