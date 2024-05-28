@@ -31,10 +31,10 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             var request = new TranslateTextRequest
             {
                 Contents = { input.Content },
-                TargetLanguageCode = input.TargetLanguageCode,
+                TargetLanguageCode = input.TargetLanguageCode ?? string.Empty,
                 Parent = Client.ProjectName.ToString(),
-                SourceLanguageCode = input.SourceLanguage,
-                GlossaryConfig = string.IsNullOrEmpty(input.GlossaryName) ? null : new TranslateTextGlossaryConfig
+                SourceLanguageCode = input.SourceLanguage ?? string.Empty,
+                GlossaryConfig = string.IsNullOrEmpty(input.GlossaryName) ? new TranslateTextGlossaryConfig() : new TranslateTextGlossaryConfig
                 {
                     Glossary = input.GlossaryName,
                     IgnoreCase = input.IgnoreKeys ?? true
