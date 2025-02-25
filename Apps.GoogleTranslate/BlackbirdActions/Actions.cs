@@ -78,8 +78,8 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         var fileStream = fileManagementClient.DownloadAsync(input.File).Result;
         var config = new DocumentInputConfig
         {
-            Content = await ByteString.FromStreamAsync(fileStream),
-            MimeType = input.File.ContentType
+            Content = await ByteString.FromStreamAsync(fileStream)
+            //MimeType = input.File.ContentType
         };
 
         var request = new Google.Cloud.Translate.V3.TranslateDocumentRequest
