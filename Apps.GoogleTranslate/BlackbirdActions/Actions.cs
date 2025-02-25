@@ -7,8 +7,10 @@ using TranslateDocumentRequest = Apps.GoogleTranslate.Models.Requests.TranslateD
 using Google.Protobuf;
 using Apps.GoogleTranslate.Dtos;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Apps.GoogleTranslate;
 
@@ -72,6 +74,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     public async Task<TranslateDocumentResponse> TranslateDocumentLanguage(
         [ActionParameter] TranslateDocumentRequest input)
     {
+        await CheckSupportedMimeTypes(input.File.ContentType);
         var fileStream = fileManagementClient.DownloadAsync(input.File).Result;
         var config = new DocumentInputConfig
         {
@@ -86,7 +89,16 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             Parent = Client.LocationName.ToString()
         };
 
-        var response = await Client.TranslateClient.TranslateDocumentAsync(request);
+        Google.Cloud.Translate.V3.TranslateDocumentResponse response;
+        try
+        {
+            response = await Client.TranslateClient.TranslateDocumentAsync(request);
+        }
+        catch (ArgumentException)
+        {
+            throw new PluginMisconfigurationException("Document format not supported, please provide a supported document format");
+        }
+
         var translatedFileBytes = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray();
 
         var dotIndex = input.File.Name.LastIndexOf(".");
@@ -140,5 +152,24 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         {
             SupportedLanguages = languages
         };
+    }
+
+    private async Task CheckSupportedMimeTypes(string mimeType)
+    {
+
+        List<string> supportedMimeTypes = new List<string>()
+        {
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        };
+
+        if (mimeType == null || supportedMimeTypes.Contains(mimeType))
+        {
+            return;
+        }
+
+        throw new PluginMisconfigurationException();
     }
 }
