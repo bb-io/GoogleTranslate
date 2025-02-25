@@ -96,7 +96,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         }
         catch (Exception ex )
         {
-            throw new PluginApplicationException($"{ex.Message}, {ex.Source}");
+            throw new PluginApplicationException($"{ex.Message}, {ex.Source} {ex.GetType()}");
         }
 
         var translatedFileBytes = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray();
