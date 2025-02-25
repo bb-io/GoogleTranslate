@@ -7,8 +7,12 @@ using TranslateDocumentRequest = Apps.GoogleTranslate.Models.Requests.TranslateD
 using Google.Protobuf;
 using Apps.GoogleTranslate.Dtos;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using static System.Net.Mime.MediaTypeNames;
+using Grpc.Core;
+using Apps.GoogleTranslate.Utils;
 
 namespace Apps.GoogleTranslate;
 
@@ -21,7 +25,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     {
         if (string.IsNullOrEmpty(input.TargetLanguageCode) && string.IsNullOrEmpty(input.AdaptiveDatasetName))
         {
-            throw new ArgumentException("Please provide either target language or adaptive dataset name. " +
+            throw new PluginMisconfigurationException("Please provide either target language or adaptive dataset name. " +
                                         "If you want to translate without using dataset, please provide target language." +
                                         "If you want to translate using adaptive dataset, please provide adaptive dataset name. ");
         }
@@ -41,7 +45,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
                 }
             };
 
-            var response = await Client.TranslateClient.TranslateTextAsync(request);
+            var response = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.TranslateTextAsync(request));
             var translation = string.IsNullOrEmpty(input.GlossaryName)
                 ? response.Translations[0]
                 : response.GlossaryTranslations.FirstOrDefault() ?? response.Translations[0];
@@ -53,13 +57,13 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             };
         }
 
-        var adaptiveMtTranslationResponse = await Client.TranslateClient.AdaptiveMtTranslateAsync(
+        var adaptiveMtTranslationResponse = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.AdaptiveMtTranslateAsync(
             new AdaptiveMtTranslateRequest
             {
                 Parent = Client.ProjectName + "/locations/us-central1",
                 Dataset = input.AdaptiveDatasetName,
                 Content = { input.Content }
-            });
+            }));
 
         return new TranslateResponse
         {
@@ -72,6 +76,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     public async Task<TranslateDocumentResponse> TranslateDocumentLanguage(
         [ActionParameter] TranslateDocumentRequest input)
     {
+        await CheckSupportedMimeTypes(input.File.ContentType);
         var fileStream = fileManagementClient.DownloadAsync(input.File).Result;
         var config = new DocumentInputConfig
         {
@@ -85,8 +90,8 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             TargetLanguageCode = input.TargetLanguageCode,
             Parent = Client.LocationName.ToString()
         };
+        Google.Cloud.Translate.V3.TranslateDocumentResponse response = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.TranslateDocumentAsync(request));
 
-        var response = await Client.TranslateClient.TranslateDocumentAsync(request);
         var translatedFileBytes = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray();
 
         var dotIndex = input.File.Name.LastIndexOf(".");
@@ -113,7 +118,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             Parent = Client.ProjectName.ToString()
         };
         
-        var response = await Client.TranslateClient.DetectLanguageAsync(request);
+        var response = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.DetectLanguageAsync(request));
         var language = response.Languages[0].LanguageCode;
         return new DetectResponse()
         {
@@ -129,7 +134,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             DisplayLanguageCode = "en"
         };
 
-        var response = await Client.TranslateClient.GetSupportedLanguagesAsync(request);
+        var response = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.GetSupportedLanguagesAsync(request));
         var languages = response.Languages.Select(l => new LanguageDto
             { 
                 LanguageCode = l.LanguageCode, 
@@ -140,5 +145,24 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         {
             SupportedLanguages = languages
         };
+    }
+
+    private async Task CheckSupportedMimeTypes(string? mimeType)
+    {
+
+        List<string> supportedMimeTypes = new List<string>()
+        {
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        };
+
+        if (mimeType != null && supportedMimeTypes.Contains(mimeType))
+        {
+            return;
+        }
+
+        throw new PluginMisconfigurationException("The document type is not supported. Please provide a valid format.");
     }
 }

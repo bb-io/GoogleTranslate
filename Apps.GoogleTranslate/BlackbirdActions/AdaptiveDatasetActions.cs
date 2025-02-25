@@ -1,6 +1,7 @@
 ﻿using Apps.GoogleTranslate.Extensions;
 using Apps.GoogleTranslate.Models.Requests;
 using Apps.GoogleTranslate.Models.Responses;
+using Apps.GoogleTranslate.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -15,10 +16,10 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
     : AppInvocable(invocationContext)
 {
     [Action("Get all adaptive datasets", Description = "List adaptive datasets")]
-    public Task<GetAllAdaptiveMtResponse> GetAdaptiveDatasetsAsync()
+    public async Task<GetAllAdaptiveMtResponse> GetAdaptiveDatasetsAsync()
     {
         string parent = Client.ProjectName + "/locations/us-central1";
-        var datasets = Client.TranslateClient.ListAdaptiveMtDatasets(new ListAdaptiveMtDatasetsRequest()
+        var datasets = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => Client.TranslateClient.ListAdaptiveMtDatasets(new ListAdaptiveMtDatasetsRequest()
         {
             Parent = parent,
         });
@@ -39,10 +40,10 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
     [Action("Get adaptive dataset", Description = "Get adaptive machine translation dataset based on ID")]
     public async Task<AdaptiveMtResponse> GetAdaptiveDatasetAsync([ActionParameter] GetAdaptiveDatasetRequest request)
     {
-        var dataset = await Client.TranslateClient.GetAdaptiveMtDatasetAsync(new GetAdaptiveMtDatasetRequest
+        var dataset = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.GetAdaptiveMtDatasetAsync(new GetAdaptiveMtDatasetRequest
         {
             Name = request.AdaptiveDatasetName
-        });
+        }));
 
         return new AdaptiveMtResponse
         {
@@ -58,7 +59,7 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
     public async Task<CreateAdaptiveMtResponse> CreateAdaptiveMtAsync([ActionParameter] CreateAdaptiveDatasetRequest request)
     {
         string parent = Client.ProjectName + "/locations/us-central1";
-        var createdDataset = await Client.TranslateClient.CreateAdaptiveMtDatasetAsync(
+        var createdDataset = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.CreateAdaptiveMtDatasetAsync(
             new CreateAdaptiveMtDatasetRequest
             {
                 Parent = parent,
@@ -71,7 +72,7 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
                     Name = $"{parent}/adaptiveMtDatasets/{request.Name}",
                     ExampleCount = request.ExampleCount ?? 10
                 }
-            });
+            }));
 
         var importRequest = new ImportAdaptiveMtFileRequest
         {
@@ -101,7 +102,7 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
             };
         }
         
-        var datasetResponse = await Client.TranslateClient.ImportAdaptiveMtFileAsync(importRequest);
+        var datasetResponse = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.ImportAdaptiveMtFileAsync(importRequest));
         return new CreateAdaptiveMtResponse
         {
             DisplayName = datasetResponse.AdaptiveMtFile.DisplayName,
@@ -113,9 +114,9 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
     [Action("Delete adaptive dataset", Description = "Delete adaptive machine translation dataset based on ID")]
     public async Task DeleteAdaptiveDatasetAsync([ActionParameter] GetAdaptiveDatasetRequest request)
     {
-        await Client.TranslateClient.DeleteAdaptiveMtDatasetAsync(new DeleteAdaptiveMtDatasetRequest
+        await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.DeleteAdaptiveMtDatasetAsync(new DeleteAdaptiveMtDatasetRequest
         {
             Name = request.AdaptiveDatasetName
-        });
+        }));
     }
 }
