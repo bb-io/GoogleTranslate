@@ -94,9 +94,9 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         {
             response = await Client.TranslateClient.TranslateDocumentAsync(request);
         }
-        catch (ArgumentException)
+        catch (Exception ex )
         {
-            throw new PluginMisconfigurationException("Document format not supported, please provide a supported document format");
+            throw new PluginApplicationException($"{ex.Message}, {ex.Source}");
         }
 
         var translatedFileBytes = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray();
