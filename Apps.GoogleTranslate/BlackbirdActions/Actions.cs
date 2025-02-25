@@ -12,6 +12,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using static System.Net.Mime.MediaTypeNames;
 using Grpc.Core;
+using Apps.GoogleTranslate.Utils;
 
 namespace Apps.GoogleTranslate;
 
@@ -44,7 +45,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
                 }
             };
 
-            var response = await Client.TranslateClient.TranslateTextAsync(request);
+            var response = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.TranslateTextAsync(request));
             var translation = string.IsNullOrEmpty(input.GlossaryName)
                 ? response.Translations[0]
                 : response.GlossaryTranslations.FirstOrDefault() ?? response.Translations[0];
@@ -56,13 +57,13 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             };
         }
 
-        var adaptiveMtTranslationResponse = await Client.TranslateClient.AdaptiveMtTranslateAsync(
+        var adaptiveMtTranslationResponse = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.AdaptiveMtTranslateAsync(
             new AdaptiveMtTranslateRequest
             {
                 Parent = Client.ProjectName + "/locations/us-central1",
                 Dataset = input.AdaptiveDatasetName,
                 Content = { input.Content }
-            });
+            }));
 
         return new TranslateResponse
         {
@@ -89,16 +90,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             TargetLanguageCode = input.TargetLanguageCode,
             Parent = Client.LocationName.ToString()
         };
-
-        Google.Cloud.Translate.V3.TranslateDocumentResponse response;
-        try
-        {
-            response = await Client.TranslateClient.TranslateDocumentAsync(request);
-        }
-        catch (RpcException ex )
-        {
-            throw new PluginApplicationException($"{ex.Message}");
-        }
+        Google.Cloud.Translate.V3.TranslateDocumentResponse response = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.TranslateDocumentAsync(request));
 
         var translatedFileBytes = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray();
 
@@ -126,7 +118,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             Parent = Client.ProjectName.ToString()
         };
         
-        var response = await Client.TranslateClient.DetectLanguageAsync(request);
+        var response = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.DetectLanguageAsync(request));
         var language = response.Languages[0].LanguageCode;
         return new DetectResponse()
         {
@@ -142,7 +134,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             DisplayLanguageCode = "en"
         };
 
-        var response = await Client.TranslateClient.GetSupportedLanguagesAsync(request);
+        var response = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.GetSupportedLanguagesAsync(request));
         var languages = response.Languages.Select(l => new LanguageDto
             { 
                 LanguageCode = l.LanguageCode, 
