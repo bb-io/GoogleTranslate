@@ -11,6 +11,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using static System.Net.Mime.MediaTypeNames;
+using Grpc.Core;
 
 namespace Apps.GoogleTranslate;
 
@@ -23,7 +24,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     {
         if (string.IsNullOrEmpty(input.TargetLanguageCode) && string.IsNullOrEmpty(input.AdaptiveDatasetName))
         {
-            throw new ArgumentException("Please provide either target language or adaptive dataset name. " +
+            throw new PluginMisconfigurationException("Please provide either target language or adaptive dataset name. " +
                                         "If you want to translate without using dataset, please provide target language." +
                                         "If you want to translate using adaptive dataset, please provide adaptive dataset name. ");
         }
@@ -74,12 +75,12 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     public async Task<TranslateDocumentResponse> TranslateDocumentLanguage(
         [ActionParameter] TranslateDocumentRequest input)
     {
-        //await CheckSupportedMimeTypes(input.File.ContentType);
+        await CheckSupportedMimeTypes(input.File.ContentType);
         var fileStream = fileManagementClient.DownloadAsync(input.File).Result;
         var config = new DocumentInputConfig
         {
-            Content = await ByteString.FromStreamAsync(fileStream)
-            //MimeType = input.File.ContentType
+            Content = await ByteString.FromStreamAsync(fileStream),
+            MimeType = input.File.ContentType
         };
 
         var request = new Google.Cloud.Translate.V3.TranslateDocumentRequest
@@ -94,9 +95,9 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         {
             response = await Client.TranslateClient.TranslateDocumentAsync(request);
         }
-        catch (Exception ex )
+        catch (RpcException ex )
         {
-            throw new PluginApplicationException($"{ex.Message}, {ex.Source} {ex.GetType()}");
+            throw new PluginApplicationException($"{ex.Message}");
         }
 
         var translatedFileBytes = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray();
@@ -154,7 +155,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         };
     }
 
-    private async Task CheckSupportedMimeTypes(string mimeType)
+    private async Task CheckSupportedMimeTypes(string? mimeType)
     {
 
         List<string> supportedMimeTypes = new List<string>()
@@ -165,11 +166,11 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         };
 
-        if (mimeType == null || supportedMimeTypes.Contains(mimeType))
+        if (mimeType != null && supportedMimeTypes.Contains(mimeType))
         {
             return;
         }
 
-        throw new PluginMisconfigurationException();
+        throw new PluginMisconfigurationException("The document type is not supported. Please provide a valid format.");
     }
 }
