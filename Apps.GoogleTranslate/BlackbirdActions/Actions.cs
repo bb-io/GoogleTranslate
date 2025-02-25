@@ -74,7 +74,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     public async Task<TranslateDocumentResponse> TranslateDocumentLanguage(
         [ActionParameter] TranslateDocumentRequest input)
     {
-        await CheckSupportedMimeTypes(input.File.ContentType);
+        //await CheckSupportedMimeTypes(input.File.ContentType);
         var fileStream = fileManagementClient.DownloadAsync(input.File).Result;
         var config = new DocumentInputConfig
         {
