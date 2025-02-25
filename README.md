@@ -29,6 +29,14 @@ Before you can connect you need to make sure that:
 - **Translate** - Translates text to a specified language. Action also supports glossary and adaptive datasets.
 - **Detect language** - Detects the language of the input text
 - **Translate document** - Translates a document to a specified language
+  - Supported input document formats:
+    - DOC application/msword
+    - DOCX application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    - PDF application/pdf
+    - PPT application/vnd.ms-powerpoint
+    - PPTX application/vnd.openxmlformats-officedocument.presentationml.presentation
+    - XLS application/vnd.ms-excel
+    - XLSX application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 
 ## Feedback
 
