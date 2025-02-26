@@ -22,9 +22,9 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
         var datasets = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => Client.TranslateClient.ListAdaptiveMtDatasets(new ListAdaptiveMtDatasetsRequest()
         {
             Parent = parent,
-        });
+        }));
 
-        return Task.FromResult(new GetAllAdaptiveMtResponse
+        return new GetAllAdaptiveMtResponse
         {
             AdaptiveMts = datasets.Select(x => new AdaptiveMtResponse
             {
@@ -34,7 +34,7 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
                 TargetLanguageCode = x.TargetLanguageCode,
                 ExampleCount = x.ExampleCount
             }).ToList()
-        });
+        };
     }
 
     [Action("Get adaptive dataset", Description = "Get adaptive machine translation dataset based on ID")]
