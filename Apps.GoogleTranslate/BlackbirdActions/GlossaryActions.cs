@@ -1,5 +1,6 @@
 ﻿using Apps.GoogleTranslate.Models.Requests;
 using Apps.GoogleTranslate.Models.Responses;
+using Apps.GoogleTranslate.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -11,15 +12,15 @@ namespace Apps.GoogleTranslate.BlackbirdActions;
 public class GlossaryActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
 {
     [Action("Get all glossaries", Description = "List all glossaries")]
-    public Task<GetAllGlossariesResponse> GetAllGlossaries()
+    public async Task<GetAllGlossariesResponse> GetAllGlossaries()
     {
         var parent = Client.ProjectName + "/locations/us-central1";
-        var glossaries = Client.TranslateClient.ListGlossaries(new ListGlossariesRequest
+        var glossaries = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => Client.TranslateClient.ListGlossaries(new ListGlossariesRequest
         {
             Parent = parent
-        });
+        }));
 
-        return Task.FromResult(new GetAllGlossariesResponse
+        return new GetAllGlossariesResponse
         {
             Glossaries = glossaries.Select(x => new GlossaryResponse
             {
@@ -30,16 +31,16 @@ public class GlossaryActions(InvocationContext invocationContext) : AppInvocable
                 SourceLanguage = x.LanguagePair.SourceLanguageCode,
                 TargetLanguage = x.LanguagePair.TargetLanguageCode
             }).ToList()
-        });
+        };
     }
     
     [Action("Get glossary", Description = "Get glossary based on name")]
     public async Task<GlossaryResponse> GetGlossary([ActionParameter] GlossaryRequest request)
     {
-        var glossary = await Client.TranslateClient.GetGlossaryAsync(new GetGlossaryRequest
+        var glossary = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.GetGlossaryAsync(new GetGlossaryRequest
         {
             Name = request.GlossaryName
-        });
+        }));
 
         return new GlossaryResponse
         {
@@ -56,7 +57,7 @@ public class GlossaryActions(InvocationContext invocationContext) : AppInvocable
     public async Task<GlossaryResponse> ImportGlossary([ActionParameter] ImportGlossaryRequest request)
     {        
         var parent = Client.ProjectName + "/locations/us-central1";
-        var createGlossaryResponse = await Client.TranslateClient.CreateGlossaryAsync(new CreateGlossaryRequest
+        var createGlossaryResponse = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.CreateGlossaryAsync(new CreateGlossaryRequest
         {
             Parent = parent,
             Glossary = new Glossary
@@ -74,7 +75,7 @@ public class GlossaryActions(InvocationContext invocationContext) : AppInvocable
                     }
                 }
             }
-        });
+        }));
 
         var operation = await createGlossaryResponse.PollUntilCompletedAsync();
         return new GlossaryResponse
@@ -91,9 +92,9 @@ public class GlossaryActions(InvocationContext invocationContext) : AppInvocable
     [Action("Delete glossary", Description = "Delete glossary based on name")]
     public async Task DeleteGlossary([ActionParameter] GlossaryRequest request)
     {
-        await Client.TranslateClient.DeleteGlossaryAsync(new DeleteGlossaryRequest
+        await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.DeleteGlossaryAsync(new DeleteGlossaryRequest
         {
             Name = request.GlossaryName
-        });
+        }));
     }
 }
