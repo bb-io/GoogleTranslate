@@ -356,3 +356,4 @@ healthchecksdb
 *.env
 
 /Apps.GoogleDrive/ApplicationConstants.cs
+/Tests.GoogleTranslate/appsettings.json

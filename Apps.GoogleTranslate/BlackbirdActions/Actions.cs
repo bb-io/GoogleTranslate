@@ -88,7 +88,8 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         {
             DocumentInputConfig = config,
             TargetLanguageCode = input.TargetLanguageCode,
-            Parent = Client.LocationName.ToString()
+            Parent = Client.LocationName.ToString(),
+            //IsTranslateNativePdfOnly = true
         };
         Google.Cloud.Translate.V3.TranslateDocumentResponse response = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.TranslateDocumentAsync(request));
 
