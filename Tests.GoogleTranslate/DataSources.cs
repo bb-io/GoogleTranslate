@@ -6,7 +6,7 @@ namespace Tests.GoogleTranslate
     public class DataSources : TestBase
     {
         [TestMethod]
-        public async Task CustomStringFieldHandlerReturnsValues()
+        public async Task DataSource_IsSucces()
         {
 
 
