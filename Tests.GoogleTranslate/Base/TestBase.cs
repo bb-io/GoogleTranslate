@@ -16,7 +16,7 @@ namespace Tests.GoogleTranslate.Base
         {
             var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
             Creds = config.GetSection("ConnectionDefinition").GetChildren()
-                .Select(x => new AuthenticationCredentialsProvider(AuthenticationCredentialsRequestLocation.None ,x.Key, x.Value)).ToList();
+                .Select(x => new AuthenticationCredentialsProvider(x.Key, x.Value)).ToList();
 
 
             var relativePath = config.GetSection("TestFolder").Value;
