@@ -84,12 +84,20 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             MimeType = input.File.ContentType
         };
 
+        bool isPdf = input.File.ContentType.Equals("application/pdf", StringComparison.InvariantCultureIgnoreCase);
+
         var request = new Google.Cloud.Translate.V3.TranslateDocumentRequest
         {
             DocumentInputConfig = config,
             TargetLanguageCode = input.TargetLanguageCode,
             Parent = Client.LocationName.ToString()
         };
+
+        if (isPdf)
+        {
+            request.IsTranslateNativePdfOnly = true;
+        }
+
         Google.Cloud.Translate.V3.TranslateDocumentResponse response = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.TranslateDocumentAsync(request));
 
         var translatedFileBytes = response.DocumentTranslation.ByteStreamOutputs[0].ToByteArray();

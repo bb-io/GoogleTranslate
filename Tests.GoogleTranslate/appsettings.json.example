@@ -1,0 +1,6 @@
+{
+  "ConnectionDefinition": {
+    "serviceAccountConfString": "",
+    
+    "TestFolder": "TestFiles"
+}
