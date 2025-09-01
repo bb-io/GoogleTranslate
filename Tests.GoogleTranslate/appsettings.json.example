@@ -1,6 +1,6 @@
 {
   "ConnectionDefinition": {
     "serviceAccountConfString": "",
-    
-    "TestFolder": "TestFiles"
+    "projectId": ""
+  }
 }

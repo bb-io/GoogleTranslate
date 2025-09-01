@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:2.2" version="2.2" srcLang="en" trgLang="fr">
+    <file id="f1">
+        <unit id="u1">
+            <notes>
+                <note>note for unit</note>
+            </notes>
+            <segment id="s1">
+                <source>Hello World</source>
+                <target></target>
+            </segment>
+        </unit>
+        <unit id="u2">
+            <notes>
+                <note>note for unit</note>
+            </notes>
+            <segment state="translated" id="s1">
+                <source>Two</source>
+                <target>This should stay intact by default</target>
+            </segment>
+        </unit>
+    </file>
+</xliff>

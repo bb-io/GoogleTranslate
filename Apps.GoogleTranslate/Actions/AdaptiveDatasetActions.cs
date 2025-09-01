@@ -9,7 +9,7 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Google.Api.Gax.ResourceNames;
 using Google.Cloud.Translate.V3;
 
-namespace Apps.GoogleTranslate.BlackbirdActions;
+namespace Apps.GoogleTranslate.Actions;
 
 /* ActionList attribute was removed due to we want to keep this function but not expose it to the user */
 public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
@@ -18,7 +18,7 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
     [Action("Get all adaptive datasets", Description = "List adaptive datasets")]
     public async Task<GetAllAdaptiveMtResponse> GetAdaptiveDatasetsAsync()
     {
-        string parent = Client.ProjectName + "/locations/us-central1";
+        string parent = Client.LocationName.ToString();
         var datasets = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => Client.TranslateClient.ListAdaptiveMtDatasets(new ListAdaptiveMtDatasetsRequest()
         {
             Parent = parent,
@@ -58,12 +58,11 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
     [Action("Create adaptive dataset", Description = "Create adaptive machine translation dataset")]
     public async Task<CreateAdaptiveMtResponse> CreateAdaptiveMtAsync([ActionParameter] CreateAdaptiveDatasetRequest request)
     {
-        string parent = Client.ProjectName + "/locations/us-central1";
+        var parent = Client.LocationName.ToString().Replace("/global", "/us-central1");
         var createdDataset = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.CreateAdaptiveMtDatasetAsync(
             new CreateAdaptiveMtDatasetRequest
             {
                 Parent = parent,
-                ParentAsLocationName = new LocationName(Client.ProjectName.ProjectId, "us-central1"),
                 AdaptiveMtDataset = new AdaptiveMtDataset
                 {
                     SourceLanguageCode = request.SourceLanguageCode,
@@ -77,7 +76,9 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
         var importRequest = new ImportAdaptiveMtFileRequest
         {
             Parent = parent,
-            ParentAsAdaptiveMtDatasetName = new AdaptiveMtDatasetName(Client.ProjectName.ProjectId, "us-central1",
+            ParentAsAdaptiveMtDatasetName = new AdaptiveMtDatasetName(
+                Client.ProjectName.ProjectId,
+                Client.LocationName.LocationId.Replace("global", "us-central1"),
                 createdDataset.AdaptiveMtDatasetName.DatasetId)
         };
 
@@ -102,7 +103,9 @@ public class AdaptiveDatasetActions(InvocationContext invocationContext, IFileMa
             };
         }
         
-        var datasetResponse = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.ImportAdaptiveMtFileAsync(importRequest));
+        var datasetResponse = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => 
+            await Client.TranslateClient.ImportAdaptiveMtFileAsync(importRequest));
+
         return new CreateAdaptiveMtResponse
         {
             DisplayName = datasetResponse.AdaptiveMtFile.DisplayName,

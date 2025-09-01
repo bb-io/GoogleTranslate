@@ -3,20 +3,14 @@ using Blackbird.Applications.Sdk.Common.Authentication;
 using Google.Api.Gax.ResourceNames;
 using Google.Cloud.Translate.V3;
 
-namespace Apps.GoogleTranslate;
+namespace Apps.GoogleTranslate.Api;
 
-public class BlackbirdGoogleTranslateClient
+public class BlackbirdGoogleTranslateClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
 {
-    private readonly string _serviceAccountConfString;
-    private readonly string _projectId;
+    private readonly string _serviceAccountConfString = authenticationCredentialsProviders.First(p => p.KeyName == CredNames.ServiceAccountConfigurationString).Value;
+    private readonly string _projectId = authenticationCredentialsProviders.First(p => p.KeyName == CredNames.ProjectId).Value;
 
     public TranslationServiceClient TranslateClient => new TranslationServiceClientBuilder { JsonCredentials = _serviceAccountConfString }.Build();
-    public ProjectName ProjectName => new ProjectName(_projectId);
-    public LocationName LocationName => new LocationName(_projectId, "global");
-
-    public BlackbirdGoogleTranslateClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
-    {
-        _serviceAccountConfString = authenticationCredentialsProviders.First(p => p.KeyName == CredNames.ServiceAccountConfigurationString).Value;
-        _projectId = authenticationCredentialsProviders.First(p => p.KeyName == CredNames.ProjectId).Value;
-    }
+    public ProjectName ProjectName => new(_projectId);
+    public LocationName LocationName => new(_projectId, "global");
 }

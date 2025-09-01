@@ -1,20 +1,31 @@
-﻿using Apps.GoogleTranslate.BlackbirdActions;
-using Blackbird.Applications.Sdk.Common.Dynamic;
+﻿using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Google.Cloud.Translate.V3;
 
 namespace Apps.GoogleTranslate.DataSourceHandlers;
 
 public class AdaptiveDatasetDataHandler(InvocationContext invocationContext)
-    : AppInvocable(invocationContext), IAsyncDataSourceHandler
+    : AppInvocable(invocationContext), IAsyncDataSourceItemHandler
 {
-    public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
+    public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context,
         CancellationToken cancellationToken)
     {
-        var actions = new AdaptiveDatasetActions(invocationContext, null);
+        var request = new ListAdaptiveMtDatasetsRequest
+        {
+            Parent = Client.LocationName.ToString().Replace("/global", "/us-central1"),
+        };
 
-        var languages = await actions.GetAdaptiveDatasetsAsync();
-        return languages.AdaptiveMts
-            .Where(x => context.SearchString == null || x.DisplayName.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
-            .ToDictionary(x => x.Name, x => x.DisplayName);
+        var adaptiveDatasets = Client.TranslateClient.ListAdaptiveMtDatasetsAsync(request);
+        var resultingData = new List<DataSourceItem>();
+
+        await foreach (var adaptiveDataset in adaptiveDatasets)
+        {
+            if (context.SearchString != null && !adaptiveDataset.DisplayName.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            resultingData.Add(new DataSourceItem(adaptiveDataset.Name, adaptiveDataset.DisplayName));
+        }
+
+        return resultingData;
     }
 }

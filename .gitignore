@@ -357,3 +357,8 @@ healthchecksdb
 
 /Apps.GoogleDrive/ApplicationConstants.cs
 /Tests.GoogleTranslate/appsettings.json
+
+/Tests.GoogleTranslate/appsettings.json
+
+/Tests.GoogleTranslate/TestFiles/Output/**
+!/Tests.GoogleTranslate/TestFiles/Output/.gitkeep
