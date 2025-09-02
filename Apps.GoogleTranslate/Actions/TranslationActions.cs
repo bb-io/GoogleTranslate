@@ -18,24 +18,8 @@ namespace Apps.GoogleTranslate.Actions;
 public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AppInvocable(invocationContext)
 {
-    [BlueprintActionDefinition(BlueprintAction.TranslateFile)]
-    [Action("Translate", Description = "Translate file content retrieved from a CMS or file storage. The output can be used in compatible actions.")]
-    public async Task<ContentTranslationResponse> TranslateContent([ActionParameter] ContentTranslationRequest input)
-    {
-        input.FileTranslationStrategy ??= "blackbird";
-        input.OutputFileHandling ??= "xliff";
-        // todo enforce "text/html" during translations
-
-        return input.FileTranslationStrategy switch
-        {
-            "blackbird" => await TranslateInteroperableFile(input),
-            "native" => await TranslateFileNatively(input),
-            _ => throw new PluginMisconfigurationException($"The provided file translation strategy '{input.FileTranslationStrategy}' is not supported."),
-        };
-    }
-
     [BlueprintActionDefinition(BlueprintAction.TranslateText)]
-    [Action("Translate text", Description = "Translate a single simple text string (using adaptive dataset if provided)")]
+    [Action("Translate text", Description = "Translate a single simple text string using glossary, custom model or adaptive dataset")]
     public async Task<TextTranslationResponse> TranslateText([ActionParameter] TextTranslationRequest input)
     {
         input.MimeType ??= "text/html";
@@ -48,6 +32,22 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         {
             TranslatedText = translation?.TranslatedText ?? string.Empty,
             DetectedSourceLanguage = translation?.DetectedSourceLanguage ?? string.Empty
+        };
+    }
+
+    [BlueprintActionDefinition(BlueprintAction.TranslateFile)]
+    [Action("Translate", Description = "Translate content retrieved from a CMS or file storage. The output can be used in compatible actions.")]
+    public async Task<ContentTranslationResponse> TranslateContent([ActionParameter] ContentTranslationRequest input)
+    {
+        input.FileTranslationStrategy ??= "blackbird";
+        input.OutputFileHandling ??= "xliff";
+        // todo enforce "text/html" during translations
+
+        return input.FileTranslationStrategy switch
+        {
+            "blackbird" => await TranslateInteroperableFile(input),
+            "native" => await TranslateFileNatively(input),
+            _ => throw new PluginMisconfigurationException($"The provided file translation strategy '{input.FileTranslationStrategy}' is not supported."),
         };
     }
 

@@ -6,7 +6,6 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Google.Api.Gax.ResourceNames;
 using Google.Cloud.Translate.V3;
 
 namespace Apps.GoogleTranslate.Actions;

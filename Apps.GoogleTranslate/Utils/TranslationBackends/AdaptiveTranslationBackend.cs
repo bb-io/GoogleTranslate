@@ -5,8 +5,6 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Google.Cloud.Translate.V3;
-using Google.Protobuf;
-using System.Diagnostics;
 
 namespace Apps.GoogleTranslate.Utils.TranslationBackends;
 
