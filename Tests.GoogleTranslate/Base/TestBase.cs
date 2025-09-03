@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common.Authentication;
+﻿using Apps.GoogleTranslate.Connections;
+using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Microsoft.Extensions.Configuration;
 
@@ -15,11 +16,14 @@ public class TestBase
     public TestBase()
     {
         var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-        Creds = config
-            .GetSection("ConnectionDefinition")
-            .GetChildren()
-            .Select(x => new AuthenticationCredentialsProvider(x.Key, x.Value ?? string.Empty))
-            .ToList();
+
+        var appConnection = new ConnectionDefinition();
+
+        Creds = appConnection.CreateAuthorizationCredentialsProviders(
+            config.GetSection("ConnectionDefinition")
+                .GetChildren()
+                .ToDictionary(x => x.Key, x => x.Value ?? string.Empty)
+        ).ToList();
 
         InvocationContext = new InvocationContext
         {
