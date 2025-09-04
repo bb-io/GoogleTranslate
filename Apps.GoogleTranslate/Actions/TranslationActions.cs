@@ -11,7 +11,6 @@ using Blackbird.Filters.Constants;
 using Blackbird.Filters.Enums;
 using Blackbird.Filters.Extensions;
 using Blackbird.Filters.Transformations;
-using Google.Cloud.Translate.V3;
 
 namespace Apps.GoogleTranslate.Actions;
 
@@ -22,8 +21,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     [BlueprintActionDefinition(BlueprintAction.TranslateText)]
     [Action("Translate text", Description = "Translate a single simple text string using glossary, custom model or adaptive dataset")]
     public async Task<TextTranslationResponse> TranslateText(
-        [ActionParameter] TextTranslationRequest input,
-        [ActionParameter] BaseTranslationConfig config)
+        [ActionParameter] BaseTranslationConfig config,
+        [ActionParameter] TextTranslationRequest input)
     {
         input.MimeType ??= "text/html";
         config.IgnoreGlossaryCase ??= true;
@@ -41,23 +40,23 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     [BlueprintActionDefinition(BlueprintAction.TranslateFile)]
     [Action("Translate", Description = "Translate content retrieved from a CMS or file storage. The output can be used in compatible actions.")]
     public async Task<ContentTranslationResponse> TranslateContent(
-        [ActionParameter] ContentTranslationRequest input,
-        [ActionParameter] BaseTranslationConfig config)
+        [ActionParameter] BaseTranslationConfig config,
+        [ActionParameter] ContentTranslationRequest input)
     {
         input.FileTranslationStrategy ??= "blackbird";
         input.OutputFileHandling ??= "xliff";
 
         return input.FileTranslationStrategy switch
         {
-            "blackbird" => await TranslateInteroperableFile(input, config),
-            "native" => await TranslateFileNatively(input, config),
+            "blackbird" => await TranslateInteroperableFile(config, input),
+            "native" => await TranslateFileNatively(config, input),
             _ => throw new PluginMisconfigurationException($"The provided file translation strategy '{input.FileTranslationStrategy}' is not supported."),
         };
     }
 
     private async Task<ContentTranslationResponse> TranslateFileNatively(
-        ContentTranslationRequest input,
-        BaseTranslationConfig config)
+        BaseTranslationConfig config,
+        ContentTranslationRequest input)
     {
         List<string> supportedMimeTypes =
         [
@@ -80,8 +79,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     }
 
     private async Task<ContentTranslationResponse> TranslateInteroperableFile(
-        ContentTranslationRequest input,
-        BaseTranslationConfig config)
+        BaseTranslationConfig config, 
+        ContentTranslationRequest input)
     {
         var stream = await fileManagementClient.DownloadAsync(input.File);
         var content = await Transformation.Parse(stream, input.File.Name);

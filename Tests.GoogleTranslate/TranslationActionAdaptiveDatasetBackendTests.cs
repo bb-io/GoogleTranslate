@@ -32,7 +32,7 @@ public class TranslationActionAdaptiveDatasetBackendTests : TestBase
             AdaptiveDatasetName = AdaptiveDatasetName,
         };
 
-        var result = await _actions.TranslateContent(translateRequest, config);
+        var result = await _actions.TranslateContent(config, translateRequest);
 
         Assert.StartsWith(fileName, result.File.Name);
     }
@@ -58,7 +58,7 @@ public class TranslationActionAdaptiveDatasetBackendTests : TestBase
             AdaptiveDatasetName = AdaptiveDatasetName,
         };
 
-        var result = await _actions.TranslateContent(translateRequest, config);
+        var result = await _actions.TranslateContent(config, translateRequest);
 
         Assert.AreEqual(fileName, result.File.Name);
     }
@@ -83,7 +83,7 @@ public class TranslationActionAdaptiveDatasetBackendTests : TestBase
         };
 
         await Assert.ThrowsExactlyAsync<Blackbird.Applications.Sdk.Common.Exceptions.PluginMisconfigurationException>(async () =>
-            await _actions.TranslateContent(translateRequest, config));
+            await _actions.TranslateContent(config, translateRequest));
     }
 
     [TestMethod]
@@ -99,7 +99,7 @@ public class TranslationActionAdaptiveDatasetBackendTests : TestBase
             AdaptiveDatasetName = AdaptiveDatasetName,
         };
 
-        var result = await _actions.TranslateText(translateRequest, config);
+        var result = await _actions.TranslateText(config, translateRequest);
 
         Assert.AreEqual<string>("Un", result.TranslatedText);
     }
