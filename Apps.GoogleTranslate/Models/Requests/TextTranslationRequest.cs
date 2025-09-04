@@ -9,7 +9,7 @@ public class TextTranslationRequest : BaseGoogleTranslationRequest, ITranslateTe
     public string Text { get; set; }
 
     [Display("MIME type", Description = "Type of the text ('text/plain' and 'text/html' supported, default is 'text/html'")]
-    public string MimeType { get; set; }
+    public string? MimeType { get; set; }
 
     public TextTranslationRequest(BaseGoogleTranslationRequest input)
     {

@@ -8,6 +8,6 @@ public class TextTranslationResponse : ITranslateTextOutput
     [Display("Translated text", Description = "The text after translation")]
     public string TranslatedText { get; set; } = string.Empty;
 
-    [Display("Detected source language")]
+    [Display("Detected source languages")]
     public string? DetectedSourceLanguage { get; set; }
 }

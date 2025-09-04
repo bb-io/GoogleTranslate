@@ -8,6 +8,6 @@ public class ContentTranslationResponse : ITranslateFileOutput
 {
     public FileReference File { get; set; } = default!;
 
-    [Display("Detected source language")]
+    [Display("Detected source languages")]
     public string DetectedSourceLanguage { get; set; } = string.Empty;
 }
