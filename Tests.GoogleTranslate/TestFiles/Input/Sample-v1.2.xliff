@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file id="f1" original="test.txt" source-language="en" target-language="fr" datatype="plaintext">
+    <header>
+      <note>Sample XLIFF 1.2 file</note>
+    </header>
+    <body>
+      <trans-unit id="u1" resname="greeting">
+        <source>Hello World</source>
+        <target></target>
+        <note>Simple greeting</note>
+      </trans-unit>
+      <trans-unit id="u2" resname="greeting" translate="no">
+        <source>Two</source>
+        <target></target>
+        <note>Simple greeting</note>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

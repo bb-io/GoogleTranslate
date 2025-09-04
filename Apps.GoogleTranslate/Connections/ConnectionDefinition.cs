@@ -1,9 +1,10 @@
 ﻿using Apps.GoogleTranslate.Constants;
-using Apps.GoogleTranslate.Models;
+using Apps.GoogleTranslate.Models.Configurations;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Apps.GoogleTranslate.Connections;
 
@@ -13,29 +14,44 @@ public class ConnectionDefinition : IConnectionDefinition
     {
         new()
         {
-            Name = "Service account",
+            Name = "Client configuration",
             AuthenticationType = ConnectionAuthenticationType.Undefined,
             ConnectionProperties = new List<ConnectionProperty>
             {
-                new(CredNames.ServiceAccountConfigurationString) { DisplayName = "Service account configuration string" },
+                new(CredNames.ClientConfiguration) { DisplayName = "Client configuration JSON string" },
             }
         }
     };
 
     public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(Dictionary<string, string> values)
     {
-        var serviceAccountConfString = values.First(v => v.Key == CredNames.ServiceAccountConfigurationString);
+        var configurationString = values.First(v => v.Key == CredNames.ClientConfiguration);
+
+        var jObject = JObject.Parse(configurationString.Value);
+        var connectionType = jObject.Value<string>("type") ?? string.Empty;
+
+        IConnectionConfiguration configuration = connectionType switch
+        {
+            "service_account" => JsonConvert.DeserializeObject<ServiceAccountConfiguration>(configurationString.Value)
+                                  ?? throw new PluginMisconfigurationException($"Unsupported service account configuration. Please, provide copy of the JSON file downloaded from Google Cloud Platform."),
+            "external_account" => JsonConvert.DeserializeObject<WorkloadIdentityFederationConfiguration>(configurationString.Value)
+                                  ?? throw new PluginMisconfigurationException($"Unsupported external account configuration string. Please, provide copy of the JSON file downloaded from Google Cloud Platform."),
+            _ => throw new PluginMisconfigurationException($"Unsupported configuration type: {connectionType}")
+        };
+
         yield return new AuthenticationCredentialsProvider(
-            serviceAccountConfString.Key,
-            serviceAccountConfString.Value
+            CredNames.ClientConfiguration,
+            configuration.ToJson()
         );
 
-        var configurationString = JsonConvert.DeserializeObject<ConfigurationString>(serviceAccountConfString.Value) ??
-                                  throw new PluginMisconfigurationException($"Invalid service account configuration string: {serviceAccountConfString.Value}");
-        
         yield return new AuthenticationCredentialsProvider(
             CredNames.ProjectId,
-            configurationString.ProjectId
+            configuration.GetProjectId()
+        );
+
+        yield return new AuthenticationCredentialsProvider(
+            CredNames.LocationId,
+            configuration.GetLocationId()
         );
     }
 }

@@ -6,7 +6,7 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Google.Cloud.Translate.V3;
 
-namespace Apps.GoogleTranslate.BlackbirdActions;
+namespace Apps.GoogleTranslate.Actions;
 
 /* ActionList attribute was removed due to we want to keep this function but not expose it to the user */
 public class GlossaryActions(InvocationContext invocationContext) : AppInvocable(invocationContext)
@@ -14,10 +14,9 @@ public class GlossaryActions(InvocationContext invocationContext) : AppInvocable
     [Action("Get all glossaries", Description = "List all glossaries")]
     public async Task<GetAllGlossariesResponse> GetAllGlossaries()
     {
-        var parent = Client.ProjectName + "/locations/us-central1";
         var glossaries = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => Client.TranslateClient.ListGlossaries(new ListGlossariesRequest
         {
-            Parent = parent
+            Parent = Client.LocationName.ToString().Replace("/global", "/us-central1")
         }));
 
         return new GetAllGlossariesResponse
@@ -56,7 +55,7 @@ public class GlossaryActions(InvocationContext invocationContext) : AppInvocable
     [Action("Import glossary", Description = "Import glossary from Google Cloud Storage. Supported formats: CSV, TMX, TSV")]
     public async Task<GlossaryResponse> ImportGlossary([ActionParameter] ImportGlossaryRequest request)
     {        
-        var parent = Client.ProjectName + "/locations/us-central1";
+        var parent = Client.LocationName.ToString().Replace("/global", "/us-central1");
         var createGlossaryResponse = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () => await Client.TranslateClient.CreateGlossaryAsync(new CreateGlossaryRequest
         {
             Parent = parent,
