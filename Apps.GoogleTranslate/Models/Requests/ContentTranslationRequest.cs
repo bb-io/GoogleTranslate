@@ -9,10 +9,15 @@ using Blackbird.Applications.SDK.Blueprints.Handlers;
 
 namespace Apps.GoogleTranslate.Models.Requests;
 
-public class ContentTranslationRequest : BaseGoogleTranslationRequest, ITranslateFileInput
+public class ContentTranslationRequest : ITranslateFileInput
 {
     [Display("Content file")]
     public FileReference File { get; set; } = new();
+
+    // Target language is required by ITranslateTextInput, so we cannot move to the BaseTranslationConfig
+    [Display("Target language", Description = "Target language of translation, ignored when adaptive dataset is selected")]
+    [DataSource(typeof(LanguageDataHandler))]
+    public string TargetLanguage { get; set; } = string.Empty;
 
     [Display("File translation strategy", Description = "Select whether to use Google Translate's own file processing capabilities or use Blackbird interoperability mode")]
     [StaticDataSource(typeof(FileTranslationStrategyHandler))]

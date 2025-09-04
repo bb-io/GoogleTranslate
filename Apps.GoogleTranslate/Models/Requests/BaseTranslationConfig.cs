@@ -4,12 +4,8 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.GoogleTranslate.Models.Requests;
 
-public abstract class BaseGoogleTranslationRequest
+public class BaseTranslationConfig
 {
-    [Display("Target language", Description = "Target language of translation, ignored when adaptive dataset is selected")]
-    [DataSource(typeof(LanguageDataHandler))]
-    public string TargetLanguage { get; set; } = string.Empty;
-
     [Display("Source language"), DataSource(typeof(LanguageDataHandler))]
     public string? SourceLanguage { get; set; }
 

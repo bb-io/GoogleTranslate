@@ -12,7 +12,8 @@ public class AdaptiveTranslationBackend : ITranslationBackend
 {
     public async Task<IEnumerable<TranslationDto>> TranslateTextAsync(
         IEnumerable<string> texts,
-        BaseGoogleTranslationRequest config,
+        string _,
+        BaseTranslationConfig config,
         BlackbirdGoogleTranslateClient client)
     {
         var translations = new List<TranslationDto>();
@@ -50,7 +51,7 @@ public class AdaptiveTranslationBackend : ITranslationBackend
 
     public Task<ContentTranslationResponse> TranslateFileAsync(
         FileReference inputFile,
-        BaseGoogleTranslationRequest config,
+        BaseTranslationConfig config,
         BlackbirdGoogleTranslateClient client,
         IFileManagementClient fileManagementClient)
     {

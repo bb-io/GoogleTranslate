@@ -11,6 +11,7 @@ using Blackbird.Filters.Constants;
 using Blackbird.Filters.Enums;
 using Blackbird.Filters.Extensions;
 using Blackbird.Filters.Transformations;
+using Google.Cloud.Translate.V3;
 
 namespace Apps.GoogleTranslate.Actions;
 
@@ -20,12 +21,14 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 {
     [BlueprintActionDefinition(BlueprintAction.TranslateText)]
     [Action("Translate text", Description = "Translate a single simple text string using glossary, custom model or adaptive dataset")]
-    public async Task<TextTranslationResponse> TranslateText([ActionParameter] TextTranslationRequest input)
+    public async Task<TextTranslationResponse> TranslateText(
+        [ActionParameter] TextTranslationRequest input,
+        [ActionParameter] BaseTranslationConfig config)
     {
         input.MimeType ??= "text/html";
-        input.IgnoreGlossaryCase ??= true;
+        config.IgnoreGlossaryCase ??= true;
 
-        var translations = await TranslationBackendFactory.TranslateTextAsync([input.Text], input, Client);
+        var translations = await TranslationBackendFactory.TranslateTextAsync([input.Text], input.MimeType, input.TargetLanguage, config, Client);
         var translation = translations.FirstOrDefault();
 
         return new TextTranslationResponse
@@ -37,21 +40,24 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
     [BlueprintActionDefinition(BlueprintAction.TranslateFile)]
     [Action("Translate", Description = "Translate content retrieved from a CMS or file storage. The output can be used in compatible actions.")]
-    public async Task<ContentTranslationResponse> TranslateContent([ActionParameter] ContentTranslationRequest input)
+    public async Task<ContentTranslationResponse> TranslateContent(
+        [ActionParameter] ContentTranslationRequest input,
+        [ActionParameter] BaseTranslationConfig config)
     {
         input.FileTranslationStrategy ??= "blackbird";
         input.OutputFileHandling ??= "xliff";
-        // todo enforce "text/html" during translations
 
         return input.FileTranslationStrategy switch
         {
-            "blackbird" => await TranslateInteroperableFile(input),
-            "native" => await TranslateFileNatively(input),
+            "blackbird" => await TranslateInteroperableFile(input, config),
+            "native" => await TranslateFileNatively(input, config),
             _ => throw new PluginMisconfigurationException($"The provided file translation strategy '{input.FileTranslationStrategy}' is not supported."),
         };
     }
 
-    private async Task<ContentTranslationResponse> TranslateFileNatively(ContentTranslationRequest input)
+    private async Task<ContentTranslationResponse> TranslateFileNatively(
+        ContentTranslationRequest input,
+        BaseTranslationConfig config)
     {
         List<string> supportedMimeTypes =
         [
@@ -70,10 +76,12 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         }
 
         return await TranslationBackendFactory.TranslateFileAsync(
-            input.File, input, Client, fileManagementClient);
+            input.File, input.TargetLanguage, config, Client, fileManagementClient);
     }
 
-    private async Task<ContentTranslationResponse> TranslateInteroperableFile(ContentTranslationRequest input)
+    private async Task<ContentTranslationResponse> TranslateInteroperableFile(
+        ContentTranslationRequest input,
+        BaseTranslationConfig config)
     {
         var stream = await fileManagementClient.DownloadAsync(input.File);
         var content = await Transformation.Parse(stream, input.File.Name);
@@ -88,7 +96,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         foreach (var batch in translatableSegments.Batch(25))
         {
             var translations = await TranslationBackendFactory.TranslateTextAsync(
-                batch.Select(s => s.GetSource()), input, Client);
+                batch.Select(s => s.GetSource()), "text/html", input.TargetLanguage, config, Client);
 
             if (batch.Count() != translations.Count())
                 throw new PluginApplicationException("Google translate did not return expected number of translations.");

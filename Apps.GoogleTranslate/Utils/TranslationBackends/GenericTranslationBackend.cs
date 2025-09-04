@@ -9,11 +9,13 @@ using Google.Protobuf;
 
 namespace Apps.GoogleTranslate.Utils.TranslationBackends;
 
-public class GenericTranslationBackend : ITranslationBackend
+public class GenericTranslationBackend(string targetLanguage) : ITranslationBackend
 {
-    public static void ValidateConfig(BaseGoogleTranslationRequest config)
+    public readonly string TargetLanguage = targetLanguage;
+
+    public void ValidateConfig(BaseTranslationConfig config)
     {
-        if (string.IsNullOrWhiteSpace(config.TargetLanguage))
+        if (string.IsNullOrWhiteSpace(TargetLanguage))
             throw new PluginMisconfigurationException("The target language can not be empty, please fill the 'Target language' field and make sure it has a valid language code");
 
         if (string.IsNullOrWhiteSpace(config.SourceLanguage) != string.IsNullOrWhiteSpace(config.GlossaryName))
@@ -22,7 +24,8 @@ public class GenericTranslationBackend : ITranslationBackend
 
     public async Task<IEnumerable<TranslationDto>> TranslateTextAsync(
         IEnumerable<string> texts,
-        BaseGoogleTranslationRequest config,
+        string mimeType,
+        BaseTranslationConfig config,
         BlackbirdGoogleTranslateClient client)
     {
         ValidateConfig(config);
@@ -30,9 +33,10 @@ public class GenericTranslationBackend : ITranslationBackend
         var genericRequest = new TranslateTextRequest
         {
             Contents = { texts },
-            TargetLanguageCode = config.TargetLanguage,
+            TargetLanguageCode = TargetLanguage,
             SourceLanguageCode = config.SourceLanguage ?? string.Empty,
             Parent = client.LocationName.ToString(),
+            MimeType = mimeType
         };
 
         if (!string.IsNullOrEmpty(config.GlossaryName))
@@ -56,7 +60,7 @@ public class GenericTranslationBackend : ITranslationBackend
 
     public async Task<ContentTranslationResponse> TranslateFileAsync(
         FileReference inputFile,
-        BaseGoogleTranslationRequest config,
+        BaseTranslationConfig config,
         BlackbirdGoogleTranslateClient client,
         IFileManagementClient fileManagementClient)
     {
@@ -72,7 +76,7 @@ public class GenericTranslationBackend : ITranslationBackend
         var request = new TranslateDocumentRequest
         {
             DocumentInputConfig = documentConfig,
-            TargetLanguageCode = config.TargetLanguage,
+            TargetLanguageCode = TargetLanguage,
             Parent = client.LocationName.ToString(),
             IsTranslateNativePdfOnly = inputFile.ContentType.Equals("application/pdf", System.StringComparison.InvariantCultureIgnoreCase)
         };

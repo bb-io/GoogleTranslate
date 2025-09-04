@@ -9,9 +9,11 @@ using Google.Protobuf;
 
 namespace Apps.GoogleTranslate.Utils.TranslationBackends;
 
-public class ModelTranslationBackend : ITranslationBackend
+public class ModelTranslationBackend(string targetLanguage) : ITranslationBackend
 {
-    public static void ValidateConfig(BaseGoogleTranslationRequest config)
+    public readonly string TargetLanguage = targetLanguage;
+
+    public static void ValidateConfig(BaseTranslationConfig config)
     {
         if (string.IsNullOrWhiteSpace(config.SourceLanguage))
             throw new PluginMisconfigurationException("The source language must be specified when using a custom model.");
@@ -19,7 +21,8 @@ public class ModelTranslationBackend : ITranslationBackend
 
     public async Task<IEnumerable<TranslationDto>> TranslateTextAsync(
         IEnumerable<string> texts,
-        BaseGoogleTranslationRequest config,
+        string mimeType,
+        BaseTranslationConfig config,
         BlackbirdGoogleTranslateClient client)
     {
         ValidateConfig(config);
@@ -31,10 +34,11 @@ public class ModelTranslationBackend : ITranslationBackend
             var request = new TranslateTextRequest
             {
                 Contents = { texts },
-                TargetLanguageCode = config.TargetLanguage,
+                TargetLanguageCode = TargetLanguage,
                 SourceLanguageCode = config.SourceLanguage,
                 Parent = client.LocationName.ToString().Replace("/global", "/us-central1"),
-                Model = config.CustomModelName
+                Model = config.CustomModelName,
+                MimeType = mimeType,
             };
 
             if (!string.IsNullOrEmpty(config.GlossaryName))
@@ -61,7 +65,7 @@ public class ModelTranslationBackend : ITranslationBackend
 
     public async Task<ContentTranslationResponse> TranslateFileAsync(
         FileReference inputFile,
-        BaseGoogleTranslationRequest config,
+        BaseTranslationConfig config,
         BlackbirdGoogleTranslateClient client,
         IFileManagementClient fileManagementClient)
     {
@@ -77,7 +81,7 @@ public class ModelTranslationBackend : ITranslationBackend
         var request = new TranslateDocumentRequest
         {
             DocumentInputConfig = documentConfig,
-            TargetLanguageCode = config.TargetLanguage,
+            TargetLanguageCode = TargetLanguage,
             SourceLanguageCode = config.SourceLanguage,
             Parent = client.LocationName.ToString().Replace("/global", "/us-central1"),
             IsTranslateNativePdfOnly = inputFile.ContentType.Equals("application/pdf", System.StringComparison.InvariantCultureIgnoreCase),

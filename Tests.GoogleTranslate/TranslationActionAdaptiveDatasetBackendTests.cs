@@ -26,10 +26,13 @@ public class TranslationActionAdaptiveDatasetBackendTests : TestBase
         {
             File = sampleFile,
             TargetLanguage = "fr",
+        };
+        var config = new BaseTranslationConfig
+        {
             AdaptiveDatasetName = AdaptiveDatasetName,
         };
 
-        var result = await _actions.TranslateContent(translateRequest);
+        var result = await _actions.TranslateContent(translateRequest, config);
 
         Assert.StartsWith(fileName, result.File.Name);
     }
@@ -49,10 +52,13 @@ public class TranslationActionAdaptiveDatasetBackendTests : TestBase
             File = sampleFile,
             TargetLanguage = "fr",
             OutputFileHandling = "original",
+        };
+        var config = new BaseTranslationConfig
+        {
             AdaptiveDatasetName = AdaptiveDatasetName,
         };
 
-        var result = await _actions.TranslateContent(translateRequest);
+        var result = await _actions.TranslateContent(translateRequest, config);
 
         Assert.AreEqual(fileName, result.File.Name);
     }
@@ -70,11 +76,14 @@ public class TranslationActionAdaptiveDatasetBackendTests : TestBase
             File = sampleFile,
             TargetLanguage = "fr",
             FileTranslationStrategy = "native",
+        };
+        var config = new BaseTranslationConfig
+        {
             AdaptiveDatasetName = AdaptiveDatasetName,
         };
 
         await Assert.ThrowsExactlyAsync<Blackbird.Applications.Sdk.Common.Exceptions.PluginMisconfigurationException>(async () =>
-            await _actions.TranslateContent(translateRequest));
+            await _actions.TranslateContent(translateRequest, config));
     }
 
     [TestMethod]
@@ -84,10 +93,13 @@ public class TranslationActionAdaptiveDatasetBackendTests : TestBase
         {
             Text = "One",
             TargetLanguage = "fr",
+        };
+        var config = new BaseTranslationConfig
+        {
             AdaptiveDatasetName = AdaptiveDatasetName,
         };
 
-        var result = await _actions.TranslateText(translateRequest);
+        var result = await _actions.TranslateText(translateRequest, config);
 
         Assert.AreEqual<string>("Un", result.TranslatedText);
     }
