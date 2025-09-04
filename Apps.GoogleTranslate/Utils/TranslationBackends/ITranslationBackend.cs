@@ -10,12 +10,13 @@ public interface ITranslationBackend
 {
     Task<IEnumerable<TranslationDto>> TranslateTextAsync(
         IEnumerable<string> texts,
-        BaseGoogleTranslationRequest config,
+        string mimeType,
+        BaseTranslationConfig config,
         BlackbirdGoogleTranslateClient client);
 
     Task<ContentTranslationResponse> TranslateFileAsync(
         FileReference inputFile,
-        BaseGoogleTranslationRequest config,
+        BaseTranslationConfig config,
         BlackbirdGoogleTranslateClient client,
         IFileManagementClient fileManagementClient);
 }

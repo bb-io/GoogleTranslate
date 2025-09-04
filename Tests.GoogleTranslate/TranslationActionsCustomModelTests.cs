@@ -25,12 +25,15 @@ public class TranslationActionsCustomModelTests : TestBase
         var translateRequest = new ContentTranslationRequest
         {
             File = sampleFile,
-            SourceLanguage = "en",
             TargetLanguage = "fr",
+        };
+        var config = new BaseTranslationConfig
+        {
+            SourceLanguage = "en",
             CustomModelName = CustomModelName,
         };
 
-        var result = await _actions.TranslateContent(translateRequest);
+        var result = await _actions.TranslateContent(config, translateRequest);
 
         Assert.StartsWith(fileName, result.File.Name);
     }
@@ -48,13 +51,16 @@ public class TranslationActionsCustomModelTests : TestBase
         var translateRequest = new ContentTranslationRequest
         {
             File = sampleFile,
-            SourceLanguage = "en",
             TargetLanguage = "fr",
             OutputFileHandling = "original",
+        };
+        var config = new BaseTranslationConfig
+        {
+            SourceLanguage = "en",
             CustomModelName = CustomModelName,
         };
 
-        var result = await _actions.TranslateContent(translateRequest);
+        var result = await _actions.TranslateContent(config, translateRequest);
 
         Assert.AreEqual(fileName, result.File.Name);
     }
@@ -69,13 +75,16 @@ public class TranslationActionsCustomModelTests : TestBase
         var translateRequest = new ContentTranslationRequest
         {
             File = sampleFile,
-            SourceLanguage = "en",
             TargetLanguage = "fr",
             FileTranslationStrategy = "native",
+        };
+        var config = new BaseTranslationConfig
+        {
+            SourceLanguage = "en",
             CustomModelName = CustomModelName,
         };
 
-        var result = await _actions.TranslateContent(translateRequest);
+        var result = await _actions.TranslateContent(config, translateRequest);
 
         Assert.IsTrue(result.DetectedSourceLanguage.StartsWith("en", StringComparison.OrdinalIgnoreCase));
     }
@@ -86,12 +95,15 @@ public class TranslationActionsCustomModelTests : TestBase
         var translateRequest = new TextTranslationRequest
         {
             Text = "One",
-            SourceLanguage = "en",
             TargetLanguage = "fr",
+        };
+        var config = new BaseTranslationConfig
+        {
+            SourceLanguage = "en",
             CustomModelName = CustomModelName,
         };
 
-        var result = await _actions.TranslateText(translateRequest);
+        var result = await _actions.TranslateText(config, translateRequest);
 
         Assert.AreEqual<string>("Un", result.TranslatedText);
     }

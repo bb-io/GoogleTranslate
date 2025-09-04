@@ -26,8 +26,9 @@ public class TranslationActionsGenericBackendTests : TestBase
             File = sampleFile,
             TargetLanguage = "fr",
         };
+        var config = new BaseTranslationConfig();
 
-        var result = await _actions.TranslateContent(translateRequest);
+        var result = await _actions.TranslateContent(config, translateRequest);
 
         Assert.StartsWith(fileName, result.File.Name);
     }
@@ -48,8 +49,9 @@ public class TranslationActionsGenericBackendTests : TestBase
             TargetLanguage = "fr",
             OutputFileHandling = "original"
         };
+        var config = new BaseTranslationConfig();
 
-        var result = await _actions.TranslateContent(translateRequest);
+        var result = await _actions.TranslateContent(config, translateRequest);
 
         Assert.AreEqual(fileName, result.File.Name);
     }
@@ -67,8 +69,9 @@ public class TranslationActionsGenericBackendTests : TestBase
             TargetLanguage = "de",
             FileTranslationStrategy = "native"
         };
+        var config = new BaseTranslationConfig();
 
-        var result = await _actions.TranslateContent(translateRequest);
+        var result = await _actions.TranslateContent(config, translateRequest);
 
         Assert.IsTrue(result.DetectedSourceLanguage.StartsWith("en", StringComparison.OrdinalIgnoreCase));
     }
@@ -81,8 +84,9 @@ public class TranslationActionsGenericBackendTests : TestBase
             Text = "One",
             TargetLanguage = "de"
         };
+        var config = new BaseTranslationConfig();
 
-        var result = await _actions.TranslateText(translateRequest);
+        var result = await _actions.TranslateText(config, translateRequest);
 
         Assert.AreEqual<string>("Eins", result.TranslatedText);
     }
