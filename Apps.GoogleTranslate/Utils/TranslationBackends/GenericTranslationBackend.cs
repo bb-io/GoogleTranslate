@@ -18,7 +18,7 @@ public class GenericTranslationBackend(string targetLanguage) : ITranslationBack
         if (string.IsNullOrWhiteSpace(TargetLanguage))
             throw new PluginMisconfigurationException("The target language can not be empty, please fill the 'Target language' field and make sure it has a valid language code");
 
-        if (string.IsNullOrWhiteSpace(config.SourceLanguage) != string.IsNullOrWhiteSpace(config.GlossaryName))
+        if (!string.IsNullOrWhiteSpace(config.GlossaryName) && string.IsNullOrWhiteSpace(config.SourceLanguage))
             throw new PluginMisconfigurationException("When using a glossary, the source language must be specified.");
     }
 
