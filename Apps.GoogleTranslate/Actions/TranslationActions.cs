@@ -27,13 +27,22 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         input.MimeType ??= "text/html";
         config.IgnoreGlossaryCase ??= true;
 
+        if (!string.IsNullOrEmpty(config.CustomModelName))
+        {
+            if(string.IsNullOrEmpty(config.SourceLanguage))
+            {
+                throw new PluginMisconfigurationException(
+                    "The source language must be specified when using a custom model.");
+            }
+        }
+
         var translations = await TranslationBackendFactory.TranslateTextAsync([input.Text], input.MimeType, input.TargetLanguage, config, Client);
         var translation = translations.FirstOrDefault();
 
         return new TextTranslationResponse
         {
             TranslatedText = translation?.TranslatedText ?? string.Empty,
-            DetectedSourceLanguage = translation?.DetectedSourceLanguage ?? string.Empty
+            DetectedSourceLanguage = translation?.DetectedSourceLanguage ?? config.SourceLanguage ?? string.Empty
         };
     }
 
