@@ -21,6 +21,6 @@ public class BaseTranslationConfig
     public string? AdaptiveDatasetName { get; set; }
 
     [Display("Custom AutoML model", Description = "Specify if you want to translate using custom AutoML model")]
-    [DataSource(typeof(AdaptiveDatasetDataHandler))]
+    [DataSource(typeof(CustomModelDataHandler))]
     public string? CustomModelName { get; set; }
 }

@@ -1,5 +1,6 @@
 ﻿using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Google.Api.Gax.ResourceNames;
 using Google.Cloud.Translate.V3;
 
 namespace Apps.GoogleTranslate.DataSourceHandlers;
@@ -9,9 +10,11 @@ public class GlossaryDataHandler(InvocationContext invocationContext)
 {
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
+        var projectId = Client.LocationName.ProjectId;
+        var location = new LocationName(projectId, "us-central1");
         var request = new ListGlossariesRequest
         {
-            Parent = Client.LocationName.ToString().Replace("/global", "/us-central1"),
+            ParentAsLocationName = location
         };
 
         var glossaries = Client.TranslateClient.ListGlossariesAsync(request);
