@@ -4,6 +4,7 @@ using Apps.GoogleTranslate.Models.Responses;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Google.Api.Gax.ResourceNames;
 using Google.Cloud.Translate.V3;
 using Google.Protobuf;
 
@@ -27,38 +28,36 @@ public class ModelTranslationBackend(string targetLanguage) : ITranslationBacken
     {
         ValidateConfig(config);
 
-        var translations = new List<TranslationDto>();
-
-        foreach (var text in texts)
+        var projectId = client.LocationName.ProjectId;
+        var location = new LocationName(projectId, "us-central1");
+        var request = new TranslateTextRequest
         {
-            var request = new TranslateTextRequest
+            Contents = { texts },
+            TargetLanguageCode = TargetLanguage,
+            SourceLanguageCode = config.SourceLanguage,
+            ParentAsLocationName = location,
+            Model = config.CustomModelName,
+            MimeType = mimeType,
+        };
+
+        if (!string.IsNullOrEmpty(config.GlossaryName))
+        {
+            request.GlossaryConfig = new TranslateTextGlossaryConfig
             {
-                Contents = { texts },
-                TargetLanguageCode = TargetLanguage,
-                SourceLanguageCode = config.SourceLanguage,
-                Parent = client.LocationName.ToString().Replace("/global", "/us-central1"),
-                Model = config.CustomModelName,
-                MimeType = mimeType,
+                Glossary = config.GlossaryName,
+                IgnoreCase = config.IgnoreGlossaryCase ?? true
             };
-
-            if (!string.IsNullOrEmpty(config.GlossaryName))
-            {
-                request.GlossaryConfig = new TranslateTextGlossaryConfig
-                {
-                    Glossary = config.GlossaryName,
-                    IgnoreCase = config.IgnoreGlossaryCase ?? true
-                };
-            }
-
-            var adaptiveMtTranslationResponse = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () =>
-                await client.TranslateClient.TranslateTextAsync(request));
-
-            var receivedTranslations = string.IsNullOrEmpty(config.GlossaryName)
-                ? adaptiveMtTranslationResponse.Translations
-                : adaptiveMtTranslationResponse.GlossaryTranslations;
-
-            translations.AddRange(receivedTranslations.Select(t => new TranslationDto(t.TranslatedText)));
         }
+
+        var adaptiveMtTranslationResponse = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () =>
+            await client.TranslateClient.TranslateTextAsync(request));
+
+        var receivedTranslations = string.IsNullOrEmpty(config.GlossaryName)
+            ? adaptiveMtTranslationResponse.Translations
+            : adaptiveMtTranslationResponse.GlossaryTranslations;
+
+        var translations = new List<TranslationDto>();
+        translations.AddRange(receivedTranslations.Select(t => new TranslationDto(t.TranslatedText)));
 
         return translations;
     }
@@ -77,14 +76,16 @@ public class ModelTranslationBackend(string targetLanguage) : ITranslationBacken
             Content = await ByteString.FromStreamAsync(fileStream),
             MimeType = inputFile.ContentType
         };
-
+        
+        var projectId = client.LocationName.ProjectId;
+        var location = new LocationName(projectId, "us-central1");
         var request = new TranslateDocumentRequest
         {
             DocumentInputConfig = documentConfig,
             TargetLanguageCode = TargetLanguage,
             SourceLanguageCode = config.SourceLanguage,
-            Parent = client.LocationName.ToString().Replace("/global", "/us-central1"),
-            IsTranslateNativePdfOnly = inputFile.ContentType.Equals("application/pdf", System.StringComparison.InvariantCultureIgnoreCase),
+            Parent = location.ToString(),
+            IsTranslateNativePdfOnly = inputFile.ContentType.Equals("application/pdf", StringComparison.InvariantCultureIgnoreCase),
             Model = config.CustomModelName
         };
 
