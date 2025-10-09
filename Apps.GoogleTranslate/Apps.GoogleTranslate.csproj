@@ -4,12 +4,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>Google Translate</Product>
-    <Version>2.0.3</Version>
+    <Version>2.0.4</Version>
     <Description>Multilingual neural machine translation service to translate text, documents and websites from one language into another.</Description>
     <AssemblyName>Apps.GoogleTranslate</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Blackbird.Applications.SDK.Blueprints" Version="1.0.0" />
+    <PackageReference Include="Blackbird.Applications.SDK.Blueprints" Version="1.0.0-rc.10308" />
     <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.1" />
     <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.26" />
     <PackageReference Include="Blackbird.Filters" Version="1.1.16" />
