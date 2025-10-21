@@ -26,4 +26,7 @@ public class ContentTranslationRequest : ITranslateFileInput
     [Display("Output file handling", Description = "Determine the format of the output file. The default Blackbird behavior is to convert to interoperable XLIFF for future steps unless native translation strategy is used.")]
     [StaticDataSource(typeof(ProcessFileFormatHandler))]
     public string? OutputFileHandling { get; set; }
+
+    [Display("Preserve XLIFF formatting (experimental)", Description = "Disabled by default. Preserve style of XLIFF inline formatting tags when translating XLIFF files. For example, allow working with OKAPI-generated bilingual files.")]
+    public bool? PreserveXliffFormatting { get; set; }
 }

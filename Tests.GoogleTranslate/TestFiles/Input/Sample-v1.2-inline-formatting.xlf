@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2" xmlns:okp="okapi-framework:xliff-extensions" xmlns:its="http://www.w3.org/2005/11/its" xmlns:itsxlf="http://www.w3.org/ns/its-xliff/" its:version="2.0">
+<file original="sample.dita" source-language="en-US" target-language="fr-FR" datatype="xml">
+<body>
+	<trans-unit id="tu26">
+		<source xml:lang="en-US">Review <ph id="1">&lt;xref href="GUID-OTHER.dita" scope="local"/></ph>.</source>
+		<target xml:lang="fr-FR"></target>
+	</trans-unit>
+	<trans-unit id="tu27">
+		<source xml:lang="en-US">The <bpt id="1">&lt;i></bpt>Date<ept id="1">&lt;/i></ept> enables you!</source>
+		<target xml:lang="fr-FR"></target>
+	</trans-unit>
+</body>
+</file>
+</xliff>
