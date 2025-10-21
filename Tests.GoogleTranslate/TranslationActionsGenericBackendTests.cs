@@ -34,6 +34,29 @@ public class TranslationActionsGenericBackendTests : TestBase
     }
 
     [TestMethod]
+    [DataRow("Sample-v1.2-inline-formatting.xlf", "application/x-xliff")]
+    [DataRow("Sample-v2.2-inline-formatting.xliff", "application/xliff+xml")]
+    public async Task Translate_InteroperableFileReplaceSource_IsSuccess(string fileName, string contentType)
+    {
+        var sampleFile = new FileReference
+        {
+            Name = fileName,
+            ContentType = contentType,
+        };
+        var translateRequest = new ContentTranslationRequest
+        {
+            File = sampleFile,
+            TargetLanguage = "fr",
+            PreserveXliffFormatting = true,
+        };
+        var config = new BaseTranslationConfig();
+
+        var result = await _actions.TranslateContent(config, translateRequest);
+
+        Assert.StartsWith(fileName, result.File.Name);
+    }
+
+    [TestMethod]
     public async Task Translate_Interoperable_OutputFileHandlingOriginal_HtmlNameUnchanged()
     {
         var fileName = "Sample.html";

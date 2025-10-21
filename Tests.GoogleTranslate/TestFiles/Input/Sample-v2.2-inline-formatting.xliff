@@ -1,0 +1,28 @@
+﻿<xliff srcLang="en" trgLang="ja-JP" version="2.2" xmlns:its="http://www.w3.org/2005/11/its" xmlns:itsxlf="http://www.w3.org/ns/its-xliff/" its:version="2.0" xmlns="urn:oasis:names:tc:xliff:document:2.2">
+  <file id="f1" original="/okapi-longhorn/workspace/xyz/input/some-page.dita">
+    <unit id="tu16" its:locQualityRatingScore="30">
+      <originalData>
+        <data id="d1">&lt;i&gt;</data>
+        <data id="d2">&lt;/i&gt;</data>
+        <data id="d3">&lt;uicontrol&gt;</data>
+        <data id="d4">&lt;/uicontrol&gt;</data>
+      </originalData>
+      <segment>
+        <source>Start <pc id="1" dataRefStart="d1" dataRefEnd="d2" canCopy="no" canDelete="no">Tast</pc> using the <pc id="2" dataRefStart="d3" dataRefEnd="d4" canCopy="no" canDelete="no">Big Red Button</pc> button.</source>
+        <target />
+      </segment>
+    </unit>
+    <unit id="tu17" its:locQualityRatingScore="30">
+      <originalData>
+        <data id="d1">&lt;uicontrol&gt;</data>
+        <data id="d2">&lt;/uicontrol&gt;</data>
+        <data id="d3">&lt;i&gt;</data>
+        <data id="d4">&lt;/i&gt;</data>
+      </originalData>
+      <segment state="initial">
+        <source>Once started, sytem creates a task in <pc id="1" dataRefStart="d1" dataRefEnd="d2" canCopy="no" canDelete="no">My Tasks</pc> for the jobs selected in the <pc id="2" dataRefStart="d1" dataRefEnd="d2" canCopy="no" canDelete="no">form</pc> about <pc id="3" dataRefStart="d3" dataRefEnd="d4" canCopy="no" canDelete="no">very important</pc> process.</source>
+        <target></target>
+      </segment>
+    </unit>
+  </file>
+</xliff>
