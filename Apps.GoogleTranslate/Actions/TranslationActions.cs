@@ -57,12 +57,21 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         input.FileTranslationStrategy ??= "blackbird";
         input.OutputFileHandling ??= "xliff";
 
-        return input.FileTranslationStrategy switch
+        if (input.FileTranslationStrategy == "blackbird")
         {
-            "blackbird" => await TranslateInteroperableFile(config, input),
-            "native" => await TranslateFileNatively(config, input),
-            _ => throw new PluginMisconfigurationException($"The provided file translation strategy '{input.FileTranslationStrategy}' is not supported."),
-        };
+            try
+            {
+                return await TranslateInteroperableFile(config, input);
+            }
+            catch (Exception)
+            {
+                return await TranslateFileNatively(config, input);
+            }
+        }
+        else
+        {
+            return await TranslateFileNatively(config, input);
+        }
     }
 
     private async Task<ContentTranslationResponse> TranslateFileNatively(
