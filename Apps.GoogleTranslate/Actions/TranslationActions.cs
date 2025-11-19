@@ -63,7 +63,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             {
                 return await TranslateInteroperableFile(config, input);
             }
-            catch (Exception)
+            catch (NotImplementedException)
             {
                 return await TranslateFileNatively(config, input);
             }
