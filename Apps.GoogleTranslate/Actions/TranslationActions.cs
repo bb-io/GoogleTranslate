@@ -1,5 +1,6 @@
 ﻿using Apps.GoogleTranslate.Models.Requests;
 using Apps.GoogleTranslate.Models.Responses;
+using Apps.GoogleTranslate.Utils;
 using Apps.GoogleTranslate.Utils.TranslationBackends;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
@@ -12,6 +13,7 @@ using Blackbird.Filters.Constants;
 using Blackbird.Filters.Enums;
 using Blackbird.Filters.Extensions;
 using Blackbird.Filters.Transformations;
+using Google.Cloud.Translate.V3;
 using HtmlAgilityPack;
 
 namespace Apps.GoogleTranslate.Actions;
@@ -108,31 +110,38 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         var detectedSourceLanguages = new List<string>();
         var actionResponse = new ContentTranslationResponse();
 
-        var translatableSegments = content
-            .GetUnits()
-            .SelectMany(u => u.Segments)
-            .Where(x => x.Source.Count > 0 && !x.IsIgnorbale && x.IsInitial);
-
-        foreach (var batch in translatableSegments.Chunk(25))
+        async Task<IEnumerable<TranslationDto>> BatchTranslate(IEnumerable<(Unit Unit, Segment Segment)> batch)
         {
             var translations = await TranslationBackendFactory.TranslateTextAsync(
-                batch.Select(s => s.GetSource()), "text/html", input.TargetLanguage, config, Client);
+                batch.Select(s => s.Segment.GetSource()), "text/html", input.TargetLanguage, config, Client);
 
             if (batch.Count() != translations.Count())
                 throw new PluginApplicationException("Google translate did not return expected number of translations.");
 
-            foreach (var (segment, translation) in batch.Zip(translations, (s, t) => (s, t)))
+            return translations;
+        }
+
+        var translations = await content
+            .GetUnits()
+            .Batch(25, x => !x.IsIgnorbale && x.IsInitial)
+            .Process(BatchTranslate);
+
+        foreach (var (unit, results) in translations)
+        {
+            foreach (var (segment, result) in results)
             {
                 segment.State = SegmentState.Translated;
 
-                if (!string.IsNullOrEmpty(translation.DetectedSourceLanguage))
-                    detectedSourceLanguages.Add(translation.DetectedSourceLanguage.ToLower());
+                if (!string.IsNullOrEmpty(result.DetectedSourceLanguage))
+                    detectedSourceLanguages.Add(result.DetectedSourceLanguage.ToLower());
 
                 if (input.PreserveXliffFormatting is not true)
-                    segment.SetTarget(translation.TranslatedText);
+                    segment.SetTarget(result.TranslatedText);
                 else
-                    SetSegmentTargetPreservingXliffFormatting(segment, translation.TranslatedText);
+                    SetSegmentTargetPreservingXliffFormatting(segment, result.TranslatedText);
             }
+            unit.Provenance.Translation.Tool = "Google Translate";
+            unit.Provenance.Translation.ToolReference = "https://translate.google.com/";
         }
 
         var mostOccuringSourceLanguage = detectedSourceLanguages.Count > 0
