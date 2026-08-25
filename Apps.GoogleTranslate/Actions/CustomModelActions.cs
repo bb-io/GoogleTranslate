@@ -52,18 +52,24 @@ public class CustomModelActions(
             : await UploadTrainingFile(createdDataset.Name, input.File, input.GcsBucketName!);
 
         if (string.IsNullOrWhiteSpace(gcsInputSource))
-            return CustomResourceMapper.ToResponse(createdDataset);
+        {
+            var fetchedDataset = await GetDataset(createdDataset.Name);
+            return CustomResourceMapper.ToResponse(fetchedDataset);
+        }
 
         await ImportDatasetData(createdDataset.Name, gcsInputSource);
 
-        var refreshedDataset = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () =>
-            await Client.TranslateClient.GetDatasetAsync(createdDataset.Name));
+        var refreshedDataset = await GetDataset(createdDataset.Name);
         var response = CustomResourceMapper.ToResponse(refreshedDataset);
         response.DataImported = true;
         response.ImportedDataGcsUri = gcsInputSource;
 
         return response;
     }
+
+    private async Task<Dataset> GetDataset(string datasetName) =>
+        await ErrorHandler.ExecuteWithErrorHandlingAsync(async () =>
+            await Client.TranslateClient.GetDatasetAsync(datasetName));
 
     [Action("Start custom model training", Description = "Start training a custom translation model from a populated dataset")]
     public async Task<StartCustomModelTrainingResponse> StartCustomModelTraining(
