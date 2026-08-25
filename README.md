@@ -62,6 +62,14 @@ You can connect the Google Translate app to Google Cloud using either a Service 
   - Supports glossary, adaptive datasets and custom AutoML models.
   - Works with Blackbirds interoperable actions, so HTML, XLIFF and other Blackbird's interoperable files could be passed as is.
   - Natively supported document formats by Google itself: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX.
+- **Create dataset** - Creates a Cloud Translation dataset for training a custom model. Optionally imports a `.tsv` or `.tmx` file. Files supplied directly to Blackbird are first uploaded to a user-provided Google Cloud Storage bucket.
+- **Start custom model training** - Starts training a custom model from an existing populated dataset and returns an operation name.
+
+For direct file import, the Google Cloud Storage bucket must be in `us-central1`, and the connected service account must be allowed to upload objects to it. Google recommends the Storage Admin role for the complete custom-model setup flow.
+
+## Events
+
+- **On custom model training completed** - Polls the operation returned by **Start custom model training** and triggers once when training succeeds, fails, or is cancelled.
 
 ## Feedback
 
