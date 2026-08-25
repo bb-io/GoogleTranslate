@@ -62,6 +62,30 @@ You can connect the Google Translate app to Google Cloud using either a Service 
   - Supports glossary, adaptive datasets and custom AutoML models.
   - Works with Blackbirds interoperable actions, so HTML, XLIFF and other Blackbird's interoperable files could be passed as is.
   - Natively supported document formats by Google itself: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX.
+- **Create dataset** - Creates a Cloud Translation dataset for training a custom model. Optionally imports a `.tsv` or `.tmx` file. Files supplied directly to Blackbird are first uploaded to a user-provided Google Cloud Storage bucket.
+- **Start custom model training** - Starts training a custom model from an existing populated dataset and returns an operation name.
+
+Google Cloud Translation requires custom datasets, custom models, and their Cloud Storage input files to use `us-central1`. If the user's existing bucket is in another region, a bucket in `us-central1` must be used for this workflow. The connected service account must be allowed to upload objects to that bucket. Google recommends the Storage Admin role for the complete custom-model setup flow.
+
+### Creating a custom model dataset with training data
+
+The **Create dataset** action can create an empty dataset or create a dataset and import training data in the same flight. Training data can be supplied either through **Input file** or through **GCS input source URL**.
+
+Use only one of the following input modes:
+
+| Input | Empty dataset | Input file | Existing GCS file |
+| --- | --- | --- | --- |
+| **Input file** | Empty | Select or map a `.tsv` or `.tmx` file from an earlier step | Empty |
+| **GCS bucket name** | Empty | Bucket name only, for example `translation-training-data` | Empty |
+| **GCS input source URL** | Empty | Empty | Full URI, for example `gs://translation-training-data/en-es.tsv` |
+
+When **Input file** is used, the app downloads the file from Blackbird, uploads it to a unique path in the specified bucket, and imports that object into the new dataset. The bucket must be in `us-central1`. Do not include the `gs://` prefix or an object path in **GCS bucket name**. Uploaded objects are not deleted automatically.
+
+Both file input options support `.tsv` and `.tmx` files. See Google's [data preparation requirements](https://cloud.google.com/translate/docs/advanced/custom-nmt-prepare) for file contents and training requirements.
+
+## Events
+
+- **On custom model training completed** - Polls the operation returned by **Start custom model training** and triggers once when training succeeds, fails, or is cancelled.
 
 ## Feedback
 
