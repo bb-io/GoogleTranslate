@@ -53,14 +53,16 @@ public class CustomModelPolling(InvocationContext invocationContext) : AppInvoca
             };
         }
 
-        var result = operation.IsFaulted
-            ? CreateFailureResponse(identifier.OperationName, operation.Exception)
+        var operationError = operation.RpcMessage.Error;
+        var model = operation.GetResultOrNull();
+        var result = operationError is not null || model is null
+            ? CreateFailureResponse(identifier.OperationName, operationError, operation.Exception)
             : new CustomModelTrainingResponse
             {
                 OperationName = identifier.OperationName,
                 Status = "Succeeded",
                 IsSuccessful = true,
-                CustomModel = CustomResourceMapper.ToResponse(operation.Result)
+                CustomModel = CustomResourceMapper.ToResponse(model)
             };
 
         return new PollingEventResponse<CustomModelTrainingMemory, CustomModelTrainingResponse>
@@ -79,16 +81,20 @@ public class CustomModelPolling(InvocationContext invocationContext) : AppInvoca
 
     private static CustomModelTrainingResponse CreateFailureResponse(
         string operationName,
+        Google.Rpc.Status? operationError,
         Google.LongRunning.OperationFailedException? exception)
     {
-        var errorCode = exception?.Status.Code;
+        var errorCode = operationError?.Code ?? exception?.Status.Code;
         return new CustomModelTrainingResponse
         {
             OperationName = operationName,
             Status = errorCode == (int)StatusCode.Cancelled ? "Cancelled" : "Failed",
             IsSuccessful = false,
             ErrorCode = errorCode,
-            ErrorMessage = exception?.Status.Message ?? exception?.Message ?? "Model training did not complete successfully."
+            ErrorMessage = operationError?.Message
+                           ?? exception?.Status.Message
+                           ?? exception?.Message
+                           ?? "Model training completed without returning a model."
         };
     }
 }
