@@ -40,4 +40,9 @@ public class CreateCustomDatasetRequest
         "GCS bucket name",
         Description = "Google Cloud Storage bucket where Input file will be uploaded. Required when Input file is specified. The bucket must be in us-central1.")]
     public string? GcsBucketName { get; set; }
+
+    [Display(
+        "GCS folder path",
+        Description = "Optional folder path within the GCS bucket where Input file will be uploaded. Do not include the bucket name or gs://.")]
+    public string? GcsFolderPath { get; set; }
 }

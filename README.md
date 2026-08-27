@@ -77,10 +77,11 @@ Use only one of the following input modes:
 | --- | --- | --- | --- |
 | **Input file** | Empty | Select or map a `.tsv` or `.tmx` file from an earlier step | Empty |
 | **GCS bucket name** | Empty | Bucket name only, for example `translation-training-data` | Empty |
+| **GCS folder path** | Empty | Optional folder path inside the bucket | Empty |
 | **GCS input source URL** | Empty | Empty | Full URI, for example `gs://translation-training-data/en-es.tsv` |
 | **File usage** | Empty | Optional: Training, Validation, Test, or Unassigned | Optional: Training, Validation, Test, or Unassigned |
 
-When **Input file** is used, the app downloads the file from Blackbird, uploads it to the specified bucket, and imports it into the new dataset. The bucket must be in `us-central1`. In **GCS bucket name**, enter only the bucket name. Do not include `gs://`, slashes (`/`), or folder paths. Uploaded files are not deleted automatically.
+When **Input file** is used, the app downloads the file from Blackbird, uploads it to the specified bucket, and imports it into the new dataset. The bucket must be in `us-central1`. In **GCS bucket name**, enter only the bucket name. Do not include `gs://`, slashes (`/`), or folder paths. To upload the file into a specific folder, provide that folder in **GCS folder path** without `gs://` or the bucket name. Uploaded files are not deleted automatically.
 
 **File usage** controls how Google uses the imported file. If it is left empty, the app sends `UNASSIGNED`, allowing Google to split the file automatically. Select **Training**, **Validation**, or **Test** only when the entire file is intended for that specific purpose.
 
