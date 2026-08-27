@@ -58,7 +58,11 @@ public class CustomModelActions(
 
         var gcsInputSource = input.File is null
             ? input.GcsInputSource
-            : await UploadTrainingFile(createdDataset.Name, input.File, input.GcsBucketName!);
+            : await UploadTrainingFile(
+                createdDataset.Name,
+                input.File,
+                input.GcsBucketName!.Trim(),
+                input.GcsFolderPath);
 
         if (string.IsNullOrWhiteSpace(gcsInputSource))
         {
@@ -114,13 +118,22 @@ public class CustomModelActions(
     private async Task<string> UploadTrainingFile(
         string datasetName,
         FileReference file,
-        string bucketName)
+        string bucketName,
+        string? folderPath)
     {
         var fileName = file.Name
             .Replace('\\', '/')
             .Split('/', StringSplitOptions.RemoveEmptyEntries)
             .LastOrDefault() ?? "training-data.tsv";
-        var objectName = $"blackbird/google-translate/datasets/{Guid.NewGuid():N}/{fileName}";
+        var datasetId = DatasetName.Parse(datasetName).DatasetId;
+        var uniqueObjectPath = $"{datasetId}/{fileName}";
+        var normalizedFolderPath = folderPath?
+            .Trim()
+            .Replace('\\', '/')
+            .Trim('/');
+        var objectName = string.IsNullOrWhiteSpace(normalizedFolderPath)
+            ? $"blackbird/google-translate/datasets/{uniqueObjectPath}"
+            : $"{normalizedFolderPath}/{uniqueObjectPath}";
 
         try
         {
@@ -224,6 +237,28 @@ public class CustomModelActions(
 
         if (input.File is null && !string.IsNullOrWhiteSpace(input.GcsBucketName))
             throw new PluginMisconfigurationException("GCS bucket name can only be used with Input file.");
+
+        if (!string.IsNullOrWhiteSpace(input.GcsBucketName) &&
+            (input.GcsBucketName.StartsWith("gs://", StringComparison.OrdinalIgnoreCase) ||
+             input.GcsBucketName.Contains('/') ||
+             input.GcsBucketName.Contains('\\')))
+        {
+            throw new PluginMisconfigurationException(
+                "GCS bucket name must contain only the bucket name. Do not include 'gs://', slashes, or a folder path. Use GCS folder path for an optional folder.");
+        }
+
+        if (input.File is null && !string.IsNullOrWhiteSpace(input.GcsFolderPath))
+            throw new PluginMisconfigurationException("GCS folder path can only be used with Input file.");
+
+        if (!string.IsNullOrWhiteSpace(input.GcsFolderPath) &&
+            input.GcsFolderPath.StartsWith("gs://", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new PluginMisconfigurationException(
+                "GCS folder path must not include 'gs://' or the bucket name.");
+        }
+
+        if (input.GcsFolderPath?.IndexOfAny(['\r', '\n']) >= 0)
+            throw new PluginMisconfigurationException("GCS folder path must not contain line breaks.");
 
         var usage = string.IsNullOrWhiteSpace(input.Usage) ? "UNASSIGNED" : input.Usage;
         if (usage is not ("TRAIN" or "VALIDATION" or "TEST" or "UNASSIGNED"))
