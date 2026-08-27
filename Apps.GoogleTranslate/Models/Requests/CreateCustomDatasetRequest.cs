@@ -1,5 +1,7 @@
 using Apps.GoogleTranslate.DataSourceHandlers;
+using Apps.GoogleTranslate.DataSourceHandlers.Enums;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Files;
 
@@ -27,6 +29,12 @@ public class CreateCustomDatasetRequest
         "Input file",
         Description = "Optional .tsv or .tmx file to upload to Google Cloud Storage and import. Use either this input or GCS input source URL.")]
     public FileReference? File { get; set; }
+
+    [Display(
+        "File usage",
+        Description = "How the imported file will be used. Defaults to Unassigned, which lets Google split the data automatically.")]
+    [StaticDataSource(typeof(DatasetUsageDataHandler))]
+    public string? Usage { get; set; }
 
     [Display(
         "GCS bucket name",

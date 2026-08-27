@@ -40,13 +40,22 @@ public class CustomModelActions(
         var completedOperation = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () =>
             await operation.PollUntilCompletedAsync());
 
-        if (completedOperation.IsFaulted)
+        var operationError = completedOperation.RpcMessage.Error ?? completedOperation.Metadata?.Error;
+        if (operationError is not null || completedOperation.IsFaulted)
         {
             throw new PluginApplicationException(
-                completedOperation.Exception?.Message ?? "Google Cloud could not create the dataset.");
+                operationError?.Message
+                ?? completedOperation.Exception?.Message
+                ?? "Google Cloud could not create the dataset.");
         }
 
-        var createdDataset = completedOperation.Result;
+        var createdDataset = completedOperation.GetResultOrNull();
+        if (createdDataset is null || string.IsNullOrWhiteSpace(createdDataset.Name))
+        {
+            throw new PluginApplicationException(
+                $"Google Cloud completed dataset creation operation '{completedOperation.Name}' without returning the created dataset.");
+        }
+
         var gcsInputSource = input.File is null
             ? input.GcsInputSource
             : await UploadTrainingFile(createdDataset.Name, input.File, input.GcsBucketName!);
@@ -57,7 +66,7 @@ public class CustomModelActions(
             return CustomResourceMapper.ToResponse(fetchedDataset);
         }
 
-        await ImportDatasetData(createdDataset.Name, gcsInputSource);
+        await ImportDatasetData(createdDataset.Name, gcsInputSource, input.Usage);
 
         var refreshedDataset = await GetDataset(createdDataset.Name);
         var response = CustomResourceMapper.ToResponse(refreshedDataset);
@@ -136,7 +145,7 @@ public class CustomModelActions(
             ? "application/x-tmx+xml"
             : "text/tab-separated-values";
 
-    private async Task ImportDatasetData(string datasetName, string gcsInputSource)
+    private async Task ImportDatasetData(string datasetName, string gcsInputSource, string? usage)
     {
         try
         {
@@ -150,6 +159,9 @@ public class CustomModelActions(
                         {
                             new DatasetInputConfig.Types.InputFile
                             {
+                                Usage = string.IsNullOrWhiteSpace(usage)
+                                    ? "UNASSIGNED"
+                                    : usage,
                                 GcsSource = new GcsInputSource
                                 {
                                     InputUri = gcsInputSource
@@ -162,10 +174,13 @@ public class CustomModelActions(
             var completedImport = await ErrorHandler.ExecuteWithErrorHandlingAsync(async () =>
                 await importOperation.PollUntilCompletedAsync());
 
-            if (completedImport.IsFaulted)
+            var importError = completedImport.RpcMessage.Error ?? completedImport.Metadata?.Error;
+            if (importError is not null || completedImport.IsFaulted)
             {
                 throw new PluginApplicationException(
-                    completedImport.Exception?.Message ?? "Google Cloud could not import the dataset data.");
+                    importError?.Message
+                    ?? completedImport.Exception?.Message
+                    ?? "Google Cloud could not import the dataset data.");
             }
         }
         catch (PluginApplicationException ex)
@@ -177,6 +192,9 @@ public class CustomModelActions(
 
     private static void ValidateDatasetInput(CreateCustomDatasetRequest input)
     {
+        if (input is null)
+            throw new PluginMisconfigurationException("Dataset input is required.");
+
         if (string.IsNullOrWhiteSpace(input.Name))
             throw new PluginMisconfigurationException("Dataset name is required.");
 
@@ -207,8 +225,18 @@ public class CustomModelActions(
         if (input.File is null && !string.IsNullOrWhiteSpace(input.GcsBucketName))
             throw new PluginMisconfigurationException("GCS bucket name can only be used with Input file.");
 
+        var usage = string.IsNullOrWhiteSpace(input.Usage) ? "UNASSIGNED" : input.Usage;
+        if (usage is not ("TRAIN" or "VALIDATION" or "TEST" or "UNASSIGNED"))
+        {
+            throw new PluginMisconfigurationException(
+                "File usage must be Training, Validation, Test, or Unassigned.");
+        }
+
         if (input.File is not null)
         {
+            if (string.IsNullOrWhiteSpace(input.File.Name))
+                throw new PluginMisconfigurationException("Input file name is required.");
+
             var extension = Path.GetExtension(input.File.Name);
             if (!extension.Equals(".tsv", StringComparison.OrdinalIgnoreCase) &&
                 !extension.Equals(".tmx", StringComparison.OrdinalIgnoreCase))
