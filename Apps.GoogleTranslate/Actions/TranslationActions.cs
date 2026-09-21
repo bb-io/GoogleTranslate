@@ -8,13 +8,11 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Filters.Coders;
 using Blackbird.Filters.Constants;
 using Blackbird.Filters.Enums;
 using Blackbird.Filters.Extensions;
 using Blackbird.Filters.Transformations;
 using Google.Cloud.Translate.V3;
-using HtmlAgilityPack;
 
 namespace Apps.GoogleTranslate.Actions;
 
@@ -105,7 +103,11 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         ContentTranslationRequest input)
     {
         var stream = await fileManagementClient.DownloadAsync(input.File);
-        var content = await Transformation.Parse(stream, input.File.Name);
+        var contentResult = Transformation.Load(stream, input.File.Name, input.File.ContentType);
+        if (!contentResult.Success)
+            throw new PluginMisconfigurationException($"The input file could not be processed: {contentResult.Error}");
+
+        var content = contentResult.Value;
 
         var detectedSourceLanguages = new List<string>();
         var actionResponse = new ContentTranslationResponse();
@@ -135,10 +137,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                 if (!string.IsNullOrEmpty(result.DetectedSourceLanguage))
                     detectedSourceLanguages.Add(result.DetectedSourceLanguage.ToLower());
 
-                if (input.PreserveXliffFormatting is not true)
-                    segment.SetTarget(result.TranslatedText);
-                else
-                    SetSegmentTargetPreservingXliffFormatting(segment, result.TranslatedText);
+                segment.SetTarget(result.TranslatedText);
             }
             unit.Provenance.Translation.Tool = "Google Translate";
             unit.Provenance.Translation.ToolReference = "https://translate.google.com/";
@@ -161,17 +160,21 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         {
             case "xliff":
                 actionResponse.File = await fileManagementClient.UploadAsync(
-                    content.Serialize().ToStream(),
-                    MediaTypes.Xliff,
-                    content.XliffFileName);
+                    content.ToStream(),
+                    MediaTypes.Xliff2,
+                    content.BilingualFileName);
                 break;
 
             case "original":
-                var targetContent = content.Target();
+                var targetContentResult = content.Target();
+                if (!targetContentResult.Success)
+                    throw new PluginMisconfigurationException($"The translated file could not be restored to its original format: {targetContentResult.Error}");
+
+                var targetContent = targetContentResult.Value;
                 actionResponse.File = await fileManagementClient.UploadAsync(
-                    targetContent.Serialize().ToStream(),
-                    targetContent.OriginalMediaType,
-                    targetContent.OriginalName);
+                    targetContent.ToStream(),
+                    targetContent.OriginalMediaType ?? input.File.ContentType,
+                    targetContent.OriginalName ?? input.File.Name);
                 break;
 
             default:
@@ -180,102 +183,4 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         return actionResponse;
     }
-
-    #region Temporary XLIFF formatting preservation
-
-    private static void SetSegmentTargetPreservingXliffFormatting(Segment segment, string translatedText)
-    {
-        // Temportary workaround for preserving inline tags the way OKAPI does it
-        // the correct way would be to just segment.SetTarget(translation.TranslatedText); with proper ContentCoder
-        segment.ContentCoder = new HtmlContentCoder();
-        var sourceTags = segment.Source.Where(c => c is InlineTag).ToList();
-
-        var doc = new HtmlDocument();
-        doc.LoadHtml(translatedText);
-        var root = doc.DocumentNode;
-
-        if (string.IsNullOrEmpty(root.InnerText))
-            return;
-
-        if (root.ChildNodes.Count == 0)
-        {
-            segment.SetTarget(translatedText);
-            return;
-        }
-
-        // we have inline tags at this point
-        // current encoders doesn't support OKAPI's tags, so we will created TextParts ourselves
-        segment.Target.Clear();
-
-        // IMPORTANT:
-        // create a single mutable local copy of sourceTags and reuse it for all top-level child nodes.
-        // so that same tag will be converted into OKAPI tags with multiple id's
-        var localTags = new List<LineElement>(sourceTags);
-
-        foreach (var node in root.ChildNodes)
-        {
-            foreach (var part in FlattenNodeToParts(node, localTags))
-                segment.Target.Add(part);
-        }
-    }
-
-    private static IEnumerable<LineElement> FlattenNodeToParts(HtmlNode node, IList<LineElement> sourceTags)
-    {
-        if (node.NodeType == HtmlNodeType.Text)
-        {
-            yield return new LineElement { Value = node.InnerText };
-            yield break;
-        }
-
-        if (node.NodeType != HtmlNodeType.Element)
-            yield break;
-
-        // Build the opening tag representation the same way original code did
-        var openingTagValue = node.EndNode switch
-        {
-            null => node.OuterHtml,
-            _ => node.OuterHtml.Substring(0, node.OuterHtml.IndexOf('>')),
-        };
-
-        // Prefer the matching source inline tag for the opening tag (if any)
-        var openingTag = sourceTags.FirstOrDefault(t =>
-            t.Value.StartsWith(openingTagValue, StringComparison.OrdinalIgnoreCase) &&
-            !t.Value.TrimStart().StartsWith("</", StringComparison.Ordinal));
-
-        if (openingTag is not null)
-        {
-            // remove the matched opening tag from the local copy so it won't be reused for nested/other nodes
-            sourceTags.Remove(openingTag);
-            yield return openingTag;
-        }
-        else
-        {
-            yield return new LineElement { Value = openingTagValue };
-        }
-
-        // Flatten children
-        foreach (var child in node.ChildNodes)
-        {
-            foreach (var part in FlattenNodeToParts(child, sourceTags))
-                yield return part;
-        }
-
-        // Prefer the matching source inline closing tag for this element (if any)
-        var closingTag = sourceTags.FirstOrDefault(t =>
-            t.Value.StartsWith($"</{node.Name}", StringComparison.OrdinalIgnoreCase));
-
-        if (closingTag is not null)
-        {
-            // remove the matched closing tag from the local copy so it won't be reused for sibling nodes
-            sourceTags.Remove(closingTag);
-            yield return closingTag;
-        }
-        else if (node.EndNode is not null)
-        {
-            // fallback raw closing tag
-            yield return new LineElement { Value = $"</{node.Name}>" };
-        }
-    }
-
-    #endregion
 }

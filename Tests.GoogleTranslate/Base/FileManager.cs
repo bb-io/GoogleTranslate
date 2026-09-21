@@ -58,6 +58,13 @@ public class FileManager : IFileManagementClient
         return Task.FromResult(fileReference);
     }
 
+    public string ReadOutputFile(string fileName)
+    {
+        var path = Path.Combine(outputFolder, fileName);
+        Assert.IsTrue(File.Exists(path), $"File not found at: {path}");
+        return File.ReadAllText(path);
+    }
+
     private static string GetProjectDirectory()
     {
         return Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)?.Parent?.Parent?.Parent?.FullName

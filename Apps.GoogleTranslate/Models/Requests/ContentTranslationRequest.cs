@@ -27,6 +27,6 @@ public class ContentTranslationRequest : ITranslateFileInput
     [StaticDataSource(typeof(ProcessFileFormatHandler))]
     public string? OutputFileHandling { get; set; }
 
-    [Display("Preserve XLIFF formatting (experimental)", Description = "Disabled by default. Preserve style of XLIFF inline formatting tags when translating XLIFF files. For example, allow working with OKAPI-generated bilingual files.")]
+    [Display("Preserve XLIFF formatting (deprecated)", Description = "This option is retained for backward compatibility. XLIFF inline formatting is now preserved automatically.")]
     public bool? PreserveXliffFormatting { get; set; }
 }
