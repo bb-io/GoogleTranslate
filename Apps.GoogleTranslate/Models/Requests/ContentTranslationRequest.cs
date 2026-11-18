@@ -5,7 +5,6 @@ using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.SDK.Blueprints.Interfaces.Translate;
-using Blackbird.Applications.SDK.Blueprints.Handlers;
 
 namespace Apps.GoogleTranslate.Models.Requests;
 
@@ -24,7 +23,7 @@ public class ContentTranslationRequest : ITranslateFileInput
     public string? FileTranslationStrategy { get; set; }
 
     [Display("Output file handling", Description = "Determine the format of the output file. The default Blackbird behavior is to convert to interoperable XLIFF for future steps unless native translation strategy is used.")]
-    [StaticDataSource(typeof(ProcessFileFormatHandler))]
+    [StaticDataSource(typeof(GoogleProcessFileFormatHandler))]
     public string? OutputFileHandling { get; set; }
 
     [Display("Preserve XLIFF formatting (deprecated)", Description = "This option is retained for backward compatibility. XLIFF inline formatting is now preserved automatically.")]

@@ -7,7 +7,9 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Blueprints;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Filters.Bilingual.Xliff1;
 using Blackbird.Filters.Constants;
 using Blackbird.Filters.Enums;
 using Blackbird.Filters.Extensions;
@@ -55,7 +57,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         [ActionParameter] ContentTranslationRequest input)
     {
         input.FileTranslationStrategy ??= "blackbird";
-        input.OutputFileHandling ??= "xliff";
+        input.OutputFileHandling ??= MediaTypes.Xliff2;
 
         if (input.FileTranslationStrategy == "blackbird")
         {
@@ -156,31 +158,38 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         actionResponse.DetectedSourceLanguage = content.SourceLanguage;
 
-        switch (input.OutputFileHandling)
+        actionResponse.File = input.OutputFileHandling switch
         {
-            case "xliff":
-                actionResponse.File = await fileManagementClient.UploadAsync(
-                    content.ToStream(),
-                    MediaTypes.Xliff2,
-                    content.BilingualFileName);
-                break;
+            "xliff" or MediaTypes.Xliff2 => await fileManagementClient.UploadAsync(
+                content.ToStream(), 
+                MediaTypes.Xliff2,
+                content.BilingualFileName),
 
-            case "original":
-                var targetContentResult = content.Target();
-                if (!targetContentResult.Success)
-                    throw new PluginMisconfigurationException($"The translated file could not be restored to its original format: {targetContentResult.Error}");
+            "xliff1" => await fileManagementClient.UploadAsync(
+                Xliff1Serializer.Serialize(content).ToStream(), 
+                MediaTypes.Xliff1,
+                content.BilingualFileName),
 
-                var targetContent = targetContentResult.Value;
-                actionResponse.File = await fileManagementClient.UploadAsync(
-                    targetContent.ToStream(),
-                    targetContent.OriginalMediaType ?? input.File.ContentType,
-                    targetContent.OriginalName ?? input.File.Name);
-                break;
+            "original" => await UploadOriginal(content, input.File),
 
-            default:
-                throw new PluginMisconfigurationException($"The provided output file handling '{input.OutputFileHandling}' is not supported.");
-        }
+            _ => throw new PluginMisconfigurationException(
+                $"The provided output file handling '{input.OutputFileHandling}' is not supported.")
+        };
 
         return actionResponse;
+    }
+    
+    private async Task<FileReference> UploadOriginal(Transformation content, FileReference inputFile)
+    {
+        var result = content.Target();
+        if (!result.Success)
+            throw new PluginMisconfigurationException(
+                $"The translated file could not be restored to its original format: {result.Error}");
+
+        var target = result.Value;
+        return await fileManagementClient.UploadAsync(
+            target.ToStream(),
+            target.OriginalMediaType ?? inputFile.ContentType,
+            target.OriginalName ?? inputFile.Name);
     }
 }
